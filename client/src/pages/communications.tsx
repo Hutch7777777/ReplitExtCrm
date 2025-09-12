@@ -1,13 +1,13 @@
 import Sidebar from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Mail, Phone, Calendar, Users } from "lucide-react";
+import { MessageSquare, Mail, Phone, Calendar, Users, Send } from "lucide-react";
 
 export default function Communications() {
   return (
     <div className="flex h-screen" data-testid="page-communications">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -19,7 +19,7 @@ export default function Communications() {
                 Manage emails, calls, and communication history
               </p>
             </div>
-            
+
             <div className="flex space-x-2">
               <Button variant="outline" data-testid="button-compose-email">
                 <Mail className="mr-2" size={16} />
@@ -46,7 +46,7 @@ export default function Communications() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -58,7 +58,7 @@ export default function Communications() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -70,7 +70,7 @@ export default function Communications() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">

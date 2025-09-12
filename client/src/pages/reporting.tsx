@@ -12,7 +12,7 @@ export default function Reporting() {
   return (
     <div className="flex h-screen" data-testid="page-reporting">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -30,7 +30,7 @@ export default function Reporting() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button variant="outline" data-testid="button-filter">
                 <Filter className="mr-2" size={16} />
@@ -46,7 +46,7 @@ export default function Reporting() {
               </Button>
             </div>
           </div>
-          
+
           <div className="mt-6">
             <StatsCards />
           </div>
@@ -72,7 +72,7 @@ export default function Reporting() {
                   <div className="w-full bg-muted h-2 rounded-full">
                     <div className="bg-chart-1 h-2 rounded-full" style={{ width: '100%' }}></div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Contacted</span>
                     <span className="font-semibold">89</span>
@@ -80,7 +80,7 @@ export default function Reporting() {
                   <div className="w-full bg-muted h-2 rounded-full">
                     <div className="bg-chart-3 h-2 rounded-full" style={{ width: '70%' }}></div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Estimates Sent</span>
                     <span className="font-semibold">45</span>
@@ -88,7 +88,7 @@ export default function Reporting() {
                   <div className="w-full bg-muted h-2 rounded-full">
                     <div className="bg-chart-4 h-2 rounded-full" style={{ width: '35%' }}></div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Closed Won</span>
                     <span className="font-semibold">28</span>
@@ -113,7 +113,7 @@ export default function Reporting() {
                     </div>
                     <span className="text-lg font-bold text-chart-2">$145K</span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium">Mike Chen</p>
@@ -121,7 +121,7 @@ export default function Reporting() {
                     </div>
                     <span className="text-lg font-bold text-chart-2">$98K</span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium">Tom Rodriguez</p>
@@ -129,7 +129,7 @@ export default function Reporting() {
                     </div>
                     <span className="text-lg font-bold text-chart-2">$78K</span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium">Lisa Park</p>
@@ -156,7 +156,7 @@ export default function Reporting() {
                       <span className="text-sm font-medium">85%</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Repair Work</span>
                     <div className="flex items-center space-x-2">
@@ -166,7 +166,7 @@ export default function Reporting() {
                       <span className="text-sm font-medium">72%</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Full Replacement</span>
                     <div className="flex items-center space-x-2">
@@ -176,7 +176,7 @@ export default function Reporting() {
                       <span className="text-sm font-medium">68%</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Roofing</span>
                     <div className="flex items-center space-x-2">
@@ -208,7 +208,7 @@ export default function Reporting() {
                       <p className="text-sm text-chart-2">97% achieved</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                     <div>
                       <p className="font-medium">New Leads Goal</p>
@@ -219,7 +219,7 @@ export default function Reporting() {
                       <p className="text-sm text-chart-3">85% achieved</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                     <div>
                       <p className="font-medium">Conversion Rate Goal</p>
@@ -247,7 +247,7 @@ export default function Reporting() {
                       <p className="text-xs text-muted-foreground">Total value: $42,500</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
                     <div className="w-2 h-2 bg-chart-1 rounded-full"></div>
                     <div className="flex-1">
@@ -255,7 +255,7 @@ export default function Reporting() {
                       <p className="text-xs text-muted-foreground">Estimated value: $125K</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
                     <div className="w-2 h-2 bg-chart-3 rounded-full"></div>
                     <div className="flex-1">
@@ -263,7 +263,7 @@ export default function Reporting() {
                       <p className="text-xs text-muted-foreground">Awaiting customer response</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
                     <div className="w-2 h-2 bg-chart-4 rounded-full"></div>
                     <div className="flex-1">

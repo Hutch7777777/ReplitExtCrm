@@ -23,7 +23,7 @@ function App() {
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
           <SidebarInset>
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex-1">
               <Switch>
                 <Route path="/" component={Dashboard} />
                 <Route path="/leads" component={LeadManagement} />

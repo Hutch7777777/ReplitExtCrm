@@ -12,15 +12,15 @@ import { useToast } from "@/hooks/use-toast";
 export default function Calendar() {
   const { toast } = useToast();
   const { isConnected } = useWebSocket();
-  
+
   // Get current week date range
   const now = new Date();
   const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
   const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
-  
+
   const startTime = startOfWeek.toISOString();
   const endTime = endOfWeek.toISOString();
-  
+
   const { data: eventsData, isLoading: eventsLoading, error: eventsError } = useCalendarEvents(startTime, endTime);
   const { data: emailsData, isLoading: emailsLoading, error: emailsError } = useOutlookEmails('inbox', 10);
   const createEventMutation = useCreateCalendarEvent();
@@ -76,7 +76,7 @@ export default function Calendar() {
   return (
     <div className="flex h-screen" data-testid="page-calendar">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -94,7 +94,7 @@ export default function Calendar() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button
                 onClick={handleCreateEvent}
@@ -133,7 +133,7 @@ export default function Calendar() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -147,7 +147,7 @@ export default function Calendar() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -161,7 +161,7 @@ export default function Calendar() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -204,7 +204,7 @@ export default function Calendar() {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="p-4 md:p-8 pt-6 space-y-6">
                       {events.map((event) => (
                         <div
                           key={event.id}
@@ -253,7 +253,7 @@ export default function Calendar() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -267,7 +267,7 @@ export default function Calendar() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -281,7 +281,7 @@ export default function Calendar() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">

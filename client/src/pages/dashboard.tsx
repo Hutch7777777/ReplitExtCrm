@@ -29,7 +29,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Quick Stats */}
         <div className="mt-6">
           <StatsCards />
@@ -37,8 +37,9 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 bg-muted p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Removed padding from here to make it flush with sidebar */}
+      <div className="flex-1 bg-muted">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6"> {/* Added internal padding here */}
             {/* Quick Actions */}
             <div className="bg-card rounded-lg border border-border p-6">
               <h3 className="text-lg font-semibold text-card-foreground mb-4">

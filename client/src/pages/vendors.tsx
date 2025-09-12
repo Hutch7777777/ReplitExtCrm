@@ -14,7 +14,7 @@ export default function Vendors() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const { data: vendors = [], isLoading } = useVendors();
   const { isConnected } = useWebSocket();
 
@@ -51,7 +51,7 @@ export default function Vendors() {
 
   const renderStars = (rating: number | null) => {
     if (!rating) return <span className="text-muted-foreground text-sm">No rating</span>;
-    
+
     return (
       <div className="flex items-center space-x-1">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -69,7 +69,7 @@ export default function Vendors() {
   return (
     <div className="flex h-screen" data-testid="page-vendors">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -87,7 +87,7 @@ export default function Vendors() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
@@ -100,7 +100,7 @@ export default function Vendors() {
                   data-testid="input-search"
                 />
               </div>
-              
+
               <Button
                 onClick={handleAddVendor}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -128,7 +128,7 @@ export default function Vendors() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -142,7 +142,7 @@ export default function Vendors() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -156,7 +156,7 @@ export default function Vendors() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -180,9 +180,9 @@ export default function Vendors() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {filteredVendors.map((vendor) => (
-                <Card key={vendor.id} className="hover:shadow-md transition-shadow" data-testid={`card-vendor-${vendor.id}`}>
+                <Card key={vendor.id} className="hover:shadow-md transition-shadow p-4 md:p-8 pt-6" data-testid={`card-vendor-${vendor.id}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg" data-testid={`text-vendor-name-${vendor.id}`}>
@@ -217,7 +217,7 @@ export default function Vendors() {
                         </span>
                       </div>
                     )}
-                    
+
                     {vendor.email && (
                       <div className="flex items-center space-x-2">
                         <Mail size={16} className="text-muted-foreground" />
@@ -226,7 +226,7 @@ export default function Vendors() {
                         </span>
                       </div>
                     )}
-                    
+
                     {vendor.phone && (
                       <div className="flex items-center space-x-2">
                         <Phone size={16} className="text-muted-foreground" />
@@ -235,7 +235,7 @@ export default function Vendors() {
                         </span>
                       </div>
                     )}
-                    
+
                     {vendor.address && (
                       <div className="flex items-start space-x-2">
                         <MapPin size={16} className="text-muted-foreground mt-0.5" />
@@ -244,7 +244,7 @@ export default function Vendors() {
                         </span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center justify-between pt-3">
                       <div data-testid={`rating-${vendor.id}`}>
                         {renderStars(vendor.rating)}
@@ -256,7 +256,7 @@ export default function Vendors() {
                   </CardContent>
                 </Card>
               ))}
-              
+
               {filteredVendors.length === 0 && !isLoading && (
                 <div className="col-span-full text-center py-12">
                   <Truck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

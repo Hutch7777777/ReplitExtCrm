@@ -14,7 +14,7 @@ export default function Customers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const { data: customers = [], isLoading } = useCustomers();
   const { isConnected } = useWebSocket();
 
@@ -37,7 +37,7 @@ export default function Customers() {
   return (
     <div className="flex h-screen" data-testid="page-customers">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -55,7 +55,7 @@ export default function Customers() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
@@ -68,7 +68,7 @@ export default function Customers() {
                   data-testid="input-search"
                 />
               </div>
-              
+
               <Button
                 onClick={handleAddCustomer}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -96,7 +96,7 @@ export default function Customers() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -108,7 +108,7 @@ export default function Customers() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -120,7 +120,7 @@ export default function Customers() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -169,7 +169,7 @@ export default function Customers() {
                         </span>
                       </div>
                     )}
-                    
+
                     {customer.phone && (
                       <div className="flex items-center space-x-2">
                         <Phone size={16} className="text-muted-foreground" />
@@ -178,7 +178,7 @@ export default function Customers() {
                         </span>
                       </div>
                     )}
-                    
+
                     {customer.address && (
                       <div className="flex items-start space-x-2">
                         <MapPin size={16} className="text-muted-foreground mt-0.5" />
@@ -190,7 +190,7 @@ export default function Customers() {
                         </span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center justify-between pt-3">
                       <Badge variant="secondary" className="text-xs">
                         Customer since {new Date(customer.createdAt).getFullYear()}
@@ -202,7 +202,7 @@ export default function Customers() {
                   </CardContent>
                 </Card>
               ))}
-              
+
               {filteredCustomers.length === 0 && !isLoading && (
                 <div className="col-span-full text-center py-12">
                   <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

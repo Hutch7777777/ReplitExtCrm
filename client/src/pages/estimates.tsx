@@ -7,7 +7,7 @@ export default function Estimates() {
   return (
     <div className="flex h-screen" data-testid="page-estimates">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -19,7 +19,7 @@ export default function Estimates() {
                 Manage estimates and pricing for your projects
               </p>
             </div>
-            
+
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-estimate">
               <Plus className="mr-2" size={16} />
               Create Estimate
@@ -40,7 +40,7 @@ export default function Estimates() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -52,7 +52,7 @@ export default function Estimates() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -64,7 +64,7 @@ export default function Estimates() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">

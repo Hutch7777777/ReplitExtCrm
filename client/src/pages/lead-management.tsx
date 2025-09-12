@@ -18,7 +18,7 @@ export default function LeadManagement() {
   const [selectedLead, setSelectedLead] = useState<Lead | undefined>();
   const [defaultStatus, setDefaultStatus] = useState<LeadStatus>("new");
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const { data: leads = [], isLoading } = useLeads(selectedDivision);
   const { isConnected } = useWebSocket();
 
@@ -70,7 +70,7 @@ export default function LeadManagement() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Search Bar */}
               <div className="relative">
@@ -84,7 +84,7 @@ export default function LeadManagement() {
                   data-testid="input-search"
                 />
               </div>
-              
+
               {/* Add Lead Button */}
               <Button
                 onClick={() => handleAddLead()}
@@ -94,7 +94,7 @@ export default function LeadManagement() {
                 <Plus className="mr-2" size={16} />
                 Add Lead
               </Button>
-              
+
               {/* Filter Button */}
               <Button
                 variant="outline"
@@ -106,7 +106,7 @@ export default function LeadManagement() {
               </Button>
             </div>
           </div>
-          
+
           {/* Quick Stats */}
           <div className="mt-6">
             <StatsCards />
