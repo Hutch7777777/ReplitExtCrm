@@ -56,6 +56,7 @@ export const leads = pgTable("leads", {
   assignedTo: varchar("assigned_to").references(() => users.id),
   notes: text("notes"),
   source: text("source"),
+  attachments: text("attachments").array().default(sql`'{}'`),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -128,6 +129,21 @@ export const vendors = pgTable("vendors", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// File attachments table
+export const fileAttachments = pgTable("file_attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadId: varchar("lead_id").references(() => leads.id),
+  estimateId: varchar("estimate_id").references(() => estimates.id),
+  jobId: varchar("job_id").references(() => jobs.id),
+  originalName: text("original_name").notNull(),
+  fileName: text("file_name").notNull(), // Unique filename on disk
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(), // Size in bytes
+  mimeType: text("mime_type").notNull(),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // White label settings table
 export const whiteLabelSettings = pgTable("white_label_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -183,6 +199,11 @@ export const insertVendorSchema = createInsertSchema(vendors).omit({
   updatedAt: true,
 });
 
+export const insertFileAttachmentSchema = createInsertSchema(fileAttachments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertWhiteLabelSettingsSchema = createInsertSchema(whiteLabelSettings).omit({
   id: true,
   createdAt: true,
@@ -210,6 +231,9 @@ export type InsertCommunication = z.infer<typeof insertCommunicationSchema>;
 
 export type Vendor = typeof vendors.$inferSelect;
 export type InsertVendor = z.infer<typeof insertVendorSchema>;
+
+export type FileAttachment = typeof fileAttachments.$inferSelect;
+export type InsertFileAttachment = z.infer<typeof insertFileAttachmentSchema>;
 
 export type WhiteLabelSettings = typeof whiteLabelSettings.$inferSelect;
 export type InsertWhiteLabelSettings = z.infer<typeof insertWhiteLabelSettingsSchema>;

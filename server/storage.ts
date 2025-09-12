@@ -6,6 +6,7 @@ import {
   type Job, type InsertJob,
   type Communication, type InsertCommunication,
   type Vendor, type InsertVendor,
+  type FileAttachment, type InsertFileAttachment,
   type WhiteLabelSettings, type InsertWhiteLabelSettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -58,6 +59,19 @@ export interface IStorage {
   createVendor(vendor: InsertVendor): Promise<Vendor>;
   updateVendor(id: string, vendor: Partial<InsertVendor>): Promise<Vendor>;
   
+  // File Attachments
+  getFileAttachments(): Promise<FileAttachment[]>;
+  getFileAttachment(id: string): Promise<FileAttachment | undefined>;
+  getFileAttachmentsByLead(leadId: string): Promise<FileAttachment[]>;
+  getFileAttachmentsByEstimate(estimateId: string): Promise<FileAttachment[]>;
+  getFileAttachmentsByJob(jobId: string): Promise<FileAttachment[]>;
+  createFileAttachment(attachment: InsertFileAttachment): Promise<FileAttachment>;
+  updateFileAttachment(id: string, attachment: Partial<InsertFileAttachment>): Promise<FileAttachment>;
+  deleteFileAttachment(id: string): Promise<void>;
+  deleteFileAttachmentsByLead(leadId: string): Promise<void>;
+  deleteFileAttachmentsByEstimate(estimateId: string): Promise<void>;
+  deleteFileAttachmentsByJob(jobId: string): Promise<void>;
+  
   // White Label Settings
   getWhiteLabelSettings(): Promise<WhiteLabelSettings>;
   updateWhiteLabelSettings(settings: InsertWhiteLabelSettings): Promise<WhiteLabelSettings>;
@@ -81,6 +95,7 @@ export class MemStorage implements IStorage {
   private jobs: Map<string, Job> = new Map();
   private communications: Map<string, Communication> = new Map();
   private vendors: Map<string, Vendor> = new Map();
+  private fileAttachments: Map<string, FileAttachment> = new Map();
   private whiteLabelSettings: WhiteLabelSettings | undefined;
 
   constructor() {
@@ -189,6 +204,7 @@ export class MemStorage implements IStorage {
       assignedTo: insertLead.assignedTo || null,
       notes: insertLead.notes || null,
       source: insertLead.source || null,
+      attachments: insertLead.attachments || [],
       status: insertLead.status ?? "new",
       priority: insertLead.priority ?? "medium",
       createdAt: new Date(),
@@ -212,6 +228,8 @@ export class MemStorage implements IStorage {
   }
 
   async deleteLead(id: string): Promise<void> {
+    // Clean up associated file attachments first
+    await this.deleteFileAttachmentsByLead(id);
     this.leads.delete(id);
   }
 
@@ -399,6 +417,173 @@ export class MemStorage implements IStorage {
     };
     this.vendors.set(id, vendor);
     return vendor;
+  }
+
+  // File Attachments
+  async getFileAttachments(): Promise<FileAttachment[]> {
+    return Array.from(this.fileAttachments.values());
+  }
+
+  async getFileAttachment(id: string): Promise<FileAttachment | undefined> {
+    return this.fileAttachments.get(id);
+  }
+
+  async getFileAttachmentsByLead(leadId: string): Promise<FileAttachment[]> {
+    return Array.from(this.fileAttachments.values()).filter(
+      attachment => attachment.leadId === leadId
+    );
+  }
+
+  async getFileAttachmentsByEstimate(estimateId: string): Promise<FileAttachment[]> {
+    return Array.from(this.fileAttachments.values()).filter(
+      attachment => attachment.estimateId === estimateId
+    );
+  }
+
+  async getFileAttachmentsByJob(jobId: string): Promise<FileAttachment[]> {
+    return Array.from(this.fileAttachments.values()).filter(
+      attachment => attachment.jobId === jobId
+    );
+  }
+
+  async createFileAttachment(insertAttachment: InsertFileAttachment): Promise<FileAttachment> {
+    const id = randomUUID();
+    const attachment: FileAttachment = {
+      ...insertAttachment,
+      id,
+      leadId: insertAttachment.leadId || null,
+      estimateId: insertAttachment.estimateId || null,
+      jobId: insertAttachment.jobId || null,
+      uploadedBy: insertAttachment.uploadedBy || null,
+      createdAt: new Date(),
+    };
+    this.fileAttachments.set(id, attachment);
+    
+    // Update lead's attachments array for consistency
+    if (attachment.leadId) {
+      const lead = this.leads.get(attachment.leadId);
+      if (lead) {
+        const updatedAttachments = [...(lead.attachments || []), id];
+        const updatedLead = { ...lead, attachments: updatedAttachments, updatedAt: new Date() };
+        this.leads.set(attachment.leadId, updatedLead);
+      }
+    }
+    
+    return attachment;
+  }
+
+  async updateFileAttachment(id: string, attachmentUpdate: Partial<InsertFileAttachment>): Promise<FileAttachment> {
+    const existing = this.fileAttachments.get(id);
+    if (!existing) throw new Error("File attachment not found");
+    
+    const prevLeadId = existing.leadId;
+    const newLeadId = attachmentUpdate.leadId !== undefined ? attachmentUpdate.leadId : prevLeadId;
+    
+    const attachment: FileAttachment = {
+      ...existing,
+      ...attachmentUpdate,
+      id: existing.id, // Preserve original ID
+      createdAt: existing.createdAt, // Preserve creation date
+      leadId: newLeadId,
+    };
+    this.fileAttachments.set(id, attachment);
+    
+    // Handle lead attachments array synchronization when leadId changes
+    if (prevLeadId !== newLeadId) {
+      // Remove from previous lead's attachments array
+      if (prevLeadId) {
+        const prevLead = this.leads.get(prevLeadId);
+        if (prevLead && prevLead.attachments) {
+          const updatedAttachments = prevLead.attachments.filter(attId => attId !== id);
+          const updatedPrevLead = { ...prevLead, attachments: updatedAttachments, updatedAt: new Date() };
+          this.leads.set(prevLeadId, updatedPrevLead);
+        }
+      }
+      
+      // Add to new lead's attachments array
+      if (newLeadId) {
+        const newLead = this.leads.get(newLeadId);
+        if (newLead) {
+          const currentAttachments = newLead.attachments || [];
+          // Avoid duplicates
+          if (!currentAttachments.includes(id)) {
+            const updatedAttachments = [...currentAttachments, id];
+            const updatedNewLead = { ...newLead, attachments: updatedAttachments, updatedAt: new Date() };
+            this.leads.set(newLeadId, updatedNewLead);
+          }
+        }
+      }
+    }
+    
+    return attachment;
+  }
+
+  async deleteFileAttachment(id: string): Promise<void> {
+    const attachment = this.fileAttachments.get(id);
+    if (attachment) {
+      // Remove from lead's attachments array for consistency
+      if (attachment.leadId) {
+        const lead = this.leads.get(attachment.leadId);
+        if (lead && lead.attachments) {
+          const updatedAttachments = lead.attachments.filter(attId => attId !== id);
+          const updatedLead = { ...lead, attachments: updatedAttachments, updatedAt: new Date() };
+          this.leads.set(attachment.leadId, updatedLead);
+        }
+      }
+      this.fileAttachments.delete(id);
+    }
+  }
+
+  async deleteFileAttachmentsByLead(leadId: string): Promise<void> {
+    const attachments = Array.from(this.fileAttachments.values())
+      .filter(attachment => attachment.leadId === leadId);
+    
+    for (const attachment of attachments) {
+      this.fileAttachments.delete(attachment.id);
+    }
+    
+    // Clear lead's attachments array
+    const lead = this.leads.get(leadId);
+    if (lead) {
+      const updatedLead = { ...lead, attachments: [], updatedAt: new Date() };
+      this.leads.set(leadId, updatedLead);
+    }
+  }
+
+  async deleteFileAttachmentsByEstimate(estimateId: string): Promise<void> {
+    const attachments = Array.from(this.fileAttachments.values())
+      .filter(attachment => attachment.estimateId === estimateId);
+    
+    for (const attachment of attachments) {
+      // Remove from associated lead's attachments array if it exists
+      if (attachment.leadId) {
+        const lead = this.leads.get(attachment.leadId);
+        if (lead && lead.attachments) {
+          const updatedAttachments = lead.attachments.filter(attId => attId !== attachment.id);
+          const updatedLead = { ...lead, attachments: updatedAttachments, updatedAt: new Date() };
+          this.leads.set(attachment.leadId, updatedLead);
+        }
+      }
+      this.fileAttachments.delete(attachment.id);
+    }
+  }
+
+  async deleteFileAttachmentsByJob(jobId: string): Promise<void> {
+    const attachments = Array.from(this.fileAttachments.values())
+      .filter(attachment => attachment.jobId === jobId);
+    
+    for (const attachment of attachments) {
+      // Remove from associated lead's attachments array if it exists
+      if (attachment.leadId) {
+        const lead = this.leads.get(attachment.leadId);
+        if (lead && lead.attachments) {
+          const updatedAttachments = lead.attachments.filter(attId => attId !== attachment.id);
+          const updatedLead = { ...lead, attachments: updatedAttachments, updatedAt: new Date() };
+          this.leads.set(attachment.leadId, updatedLead);
+        }
+      }
+      this.fileAttachments.delete(attachment.id);
+    }
   }
 
   // White Label Settings
