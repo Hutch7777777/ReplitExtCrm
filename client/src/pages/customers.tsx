@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Search, Plus, Edit, User, Phone, Mail, MapPin } from "lucide-react";
-import Sidebar from "@/components/layout/sidebar";
 import CustomerModal from "@/components/modals/customer-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useCustomers } from "@/hooks/use-customers";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { Customer } from "@shared/schema";
@@ -35,12 +35,12 @@ export default function Customers() {
   };
 
   return (
-    <div className="flex h-screen" data-testid="page-customers">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-customers">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 Customers
@@ -55,33 +55,35 @@ export default function Customers() {
                 </span>
               )}
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                <Input
-                  type="text"
-                  placeholder="Search customers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2"
-                  data-testid="input-search"
-                />
-              </div>
-
-              <Button
-                onClick={handleAddCustomer}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                data-testid="button-add-customer"
-              >
-                <Plus className="mr-2" size={16} />
-                Add Customer
-              </Button>
-            </div>
           </div>
-        </header>
 
-        <div className="flex-1 bg-muted p-6">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input
+                type="text"
+                placeholder="Search customers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2"
+                data-testid="input-search"
+              />
+            </div>
+
+            <Button
+              onClick={handleAddCustomer}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              data-testid="button-add-customer"
+            >
+              <Plus className="mr-2" size={16} />
+              Add Customer
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-muted p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4">
@@ -214,7 +216,6 @@ export default function Customers() {
             </div>
           )}
         </div>
-      </main>
 
       <CustomerModal
         open={isModalOpen}
