@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Plus, Mail, Calendar as CalendarIcon, Users, Clock, ExternalLink } from "lucide-react";
-import Sidebar from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useCalendarEvents, useOutlookEmails, useCreateCalendarEvent, useSendEmail } from "@/hooks/use-outlook";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
@@ -74,12 +74,12 @@ export default function Calendar() {
   };
 
   return (
-    <div className="flex h-screen" data-testid="page-calendar">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-calendar">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 Calendar & Communications
@@ -94,26 +94,28 @@ export default function Calendar() {
                 </span>
               )}
             </div>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={handleCreateEvent}
-                disabled={createEventMutation.isPending}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                data-testid="button-create-event"
-              >
-                <Plus className="mr-2" size={16} />
-                Schedule Event
-              </Button>
-              <Button variant="outline" data-testid="button-outlook">
-                <ExternalLink className="mr-2" size={16} />
-                Open Outlook
-              </Button>
-            </div>
           </div>
-        </header>
 
-        <div className="flex-1 bg-muted p-6">
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={handleCreateEvent}
+              disabled={createEventMutation.isPending}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              data-testid="button-create-event"
+            >
+              <Plus className="mr-2" size={16} />
+              Schedule Event
+            </Button>
+            <Button variant="outline" data-testid="button-outlook">
+              <ExternalLink className="mr-2" size={16} />
+              Open Outlook
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-muted p-6">
           <Tabs defaultValue="calendar" className="w-full">
             <TabsList className="grid w-fit grid-cols-2 mb-6" data-testid="tabs-calendar">
               <TabsTrigger value="calendar">Calendar Events</TabsTrigger>
@@ -204,7 +206,7 @@ export default function Calendar() {
                       </p>
                     </div>
                   ) : (
-                    <div className="p-4 md:p-8 pt-6 space-y-6">
+                    <div className="space-y-6">
                       {events.map((event) => (
                         <div
                           key={event.id}
@@ -361,7 +363,6 @@ export default function Calendar() {
             </TabsContent>
           </Tabs>
         </div>
-      </main>
     </div>
   );
 }
