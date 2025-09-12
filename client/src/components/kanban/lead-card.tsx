@@ -29,9 +29,13 @@ export default function LeadCard({ lead, onClick, isDragging }: LeadCardProps) {
     return `Est. $${Number(value).toLocaleString()}`;
   };
 
-  const getTimeAgo = (date: Date) => {
+  const getTimeAgo = (date: Date | string | null) => {
+    if (!date) return 'Unknown';
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Unknown';
+    
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffTime = Math.abs(now.getTime() - dateObj.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays === 1) return 'Today';
@@ -56,10 +60,10 @@ export default function LeadCard({ lead, onClick, isDragging }: LeadCardProps) {
             {lead.customerName}
           </h4>
           <Badge 
-            className={cn("text-xs px-2 py-1", getPriorityColor(lead.priority))}
+            className={cn("text-xs px-2 py-1", getPriorityColor(lead.priority || 'medium'))}
             data-testid={`badge-priority-${lead.id}`}
           >
-            {lead.priority.charAt(0).toUpperCase() + lead.priority.slice(1)}
+            {(lead.priority || 'medium').charAt(0).toUpperCase() + (lead.priority || 'medium').slice(1)}
           </Badge>
         </div>
         
@@ -68,7 +72,7 @@ export default function LeadCard({ lead, onClick, isDragging }: LeadCardProps) {
         </p>
         
         <p className="text-sm text-muted-foreground mb-3" data-testid={`text-project-type-${lead.id}`}>
-          {lead.projectType.charAt(0).toUpperCase() + lead.projectType.slice(1)} Work
+          {(lead.projectType || 'general').charAt(0).toUpperCase() + (lead.projectType || 'general').slice(1)} Work
         </p>
         
         <div className="flex items-center justify-between">
