@@ -1,16 +1,16 @@
-import Sidebar from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, FileText, DollarSign, Clock, CheckCircle } from "lucide-react";
 
 export default function Estimates() {
   return (
-    <div className="flex h-screen" data-testid="page-estimates">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-estimates">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 Estimates
@@ -19,15 +19,17 @@ export default function Estimates() {
                 Manage estimates and pricing for your projects
               </p>
             </div>
-
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-estimate">
-              <Plus className="mr-2" size={16} />
-              Create Estimate
-            </Button>
           </div>
-        </header>
 
-        <div className="flex-1 bg-muted p-6">
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-estimate">
+            <Plus className="mr-2" size={16} />
+            Create Estimate
+          </Button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-muted p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4">
@@ -93,7 +95,6 @@ export default function Estimates() {
             </CardContent>
           </Card>
         </div>
-      </main>
     </div>
   );
 }
