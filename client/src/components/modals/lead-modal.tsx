@@ -351,13 +351,19 @@ export default function LeadModal({
                   <FormItem>
                     <FormLabel>Estimated Value</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01"
-                        placeholder="0.00" 
-                        {...field} 
-                        data-testid="input-estimated-value"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" aria-hidden="true">$</span>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          min="0"
+                          inputMode="decimal"
+                          placeholder="0.00" 
+                          {...field} 
+                          className="pl-8"
+                          data-testid="input-estimated-value"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
