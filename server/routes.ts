@@ -2,6 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
+import { randomUUID } from "crypto";
 import { 
   insertLeadSchema,
   insertCustomerSchema,
@@ -9,6 +13,7 @@ import {
   insertJobSchema,
   insertCommunicationSchema,
   insertVendorSchema,
+  insertFileAttachmentSchema,
   insertWhiteLabelSettingsSchema 
 } from "@shared/schema";
 import { sendEmail, getEmails, getCalendarEvents, createCalendarEvent } from "./outlookClient";
@@ -247,6 +252,236 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(settings);
     } catch (error) {
       res.status(400).json({ message: 'Invalid white label settings' });
+    }
+  });
+
+  // File upload configuration
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  
+  // Ensure uploads directory exists
+  const ensureUploadsDir = async () => {
+    try {
+      await fs.access(uploadsDir);
+    } catch {
+      await fs.mkdir(uploadsDir, { recursive: true });
+    }
+  };
+  
+  // Sanitize and validate entity IDs to prevent directory traversal
+  const sanitizeEntityId = (id: string): string => {
+    if (!id || typeof id !== 'string') return '';
+    // Only allow alphanumeric, hyphens, and underscores (UUID-safe pattern)
+    return id.replace(/[^a-zA-Z0-9_-]/g, '');
+  };
+
+  const validateEntityId = (id: string): boolean => {
+    return /^[a-zA-Z0-9_-]+$/.test(id) && id.length > 0 && id.length <= 100;
+  };
+
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const { leadId, estimateId, jobId } = req.body;
+        let subDir = 'general';
+        
+        // Sanitize and validate entity IDs to prevent directory traversal
+        if (leadId) {
+          const sanitizedId = sanitizeEntityId(leadId);
+          if (!validateEntityId(sanitizedId)) {
+            return cb(new Error('Invalid leadId format'), '');
+          }
+          subDir = `leads/${sanitizedId}`;
+        } else if (estimateId) {
+          const sanitizedId = sanitizeEntityId(estimateId);
+          if (!validateEntityId(sanitizedId)) {
+            return cb(new Error('Invalid estimateId format'), '');
+          }
+          subDir = `estimates/${sanitizedId}`;
+        } else if (jobId) {
+          const sanitizedId = sanitizeEntityId(jobId);
+          if (!validateEntityId(sanitizedId)) {
+            return cb(new Error('Invalid jobId format'), '');
+          }
+          subDir = `jobs/${sanitizedId}`;
+        }
+        
+        const fullPath = path.join(uploadsDir, subDir);
+        
+        // Ensure the resolved path is still within uploads directory
+        const resolvedPath = path.resolve(fullPath);
+        const resolvedUploadsDir = path.resolve(uploadsDir);
+        if (!resolvedPath.startsWith(resolvedUploadsDir)) {
+          return cb(new Error('Invalid path: directory traversal detected'), '');
+        }
+        
+        // Use synchronous mkdir or callback-based mkdir
+        fs.mkdir(fullPath, { recursive: true })
+          .then(() => cb(null, fullPath))
+          .catch((error) => cb(error, ''));
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = `${Date.now()}-${randomUUID()}`;
+        const extension = path.extname(file.originalname);
+        const baseName = path.basename(file.originalname, extension);
+        const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9-_]/g, '_');
+        cb(null, `${sanitizedBaseName}-${uniqueSuffix}${extension}`);
+      }
+    }),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow common business file types
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain',
+        'text/csv',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/zip'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`File type ${file.mimetype} not allowed`));
+      }
+    }
+  });
+
+  // Initialize uploads directory
+  await ensureUploadsDir();
+
+  // File Attachment routes
+  app.post('/api/attachments/upload', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const { leadId, estimateId, jobId, uploadedBy } = req.body;
+      
+      if (!leadId && !estimateId && !jobId) {
+        return res.status(400).json({ message: 'Must specify leadId, estimateId, or jobId' });
+      }
+
+      const attachmentData = {
+        leadId: leadId || null,
+        estimateId: estimateId || null,
+        jobId: jobId || null,
+        originalName: req.file.originalname,
+        fileName: req.file.filename,
+        filePath: req.file.path,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        uploadedBy: uploadedBy || null,
+      };
+
+      const parsedData = insertFileAttachmentSchema.parse(attachmentData);
+      const attachment = await storage.createFileAttachment(parsedData);
+      
+      broadcastUpdate('attachment_created', attachment);
+      res.json(attachment);
+    } catch (error: any) {
+      // Clean up uploaded file if database save fails
+      if (req.file) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch {}
+      }
+      
+      if (error.message?.includes('File type')) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: 'Failed to upload file' });
+    }
+  });
+
+  app.get('/api/attachments/:id/download', async (req, res) => {
+    try {
+      const attachment = await storage.getFileAttachment(req.params.id);
+      if (!attachment) {
+        return res.status(404).json({ message: 'Attachment not found' });
+      }
+
+      // Check if file exists
+      try {
+        await fs.access(attachment.filePath);
+      } catch {
+        return res.status(404).json({ message: 'File not found on disk' });
+      }
+
+      // Sanitize filename for Content-Disposition header
+      const sanitizeFilename = (filename: string): string => {
+        // Remove control characters and problematic characters
+        return filename.replace(/[\x00-\x1f\x80-\x9f"\\]/g, '').replace(/[<>:"/|?*]/g, '_');
+      };
+      
+      const safeFilename = sanitizeFilename(attachment.originalName);
+      const encodedFilename = encodeURIComponent(safeFilename);
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`);
+      res.setHeader('Content-Type', attachment.mimeType);
+      res.sendFile(path.resolve(attachment.filePath));
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to download file' });
+    }
+  });
+
+  app.get('/api/leads/:id/attachments', async (req, res) => {
+    try {
+      const attachments = await storage.getFileAttachmentsByLead(req.params.id);
+      res.json(attachments);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch attachments' });
+    }
+  });
+
+  app.get('/api/estimates/:id/attachments', async (req, res) => {
+    try {
+      const attachments = await storage.getFileAttachmentsByEstimate(req.params.id);
+      res.json(attachments);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch attachments' });
+    }
+  });
+
+  app.get('/api/jobs/:id/attachments', async (req, res) => {
+    try {
+      const attachments = await storage.getFileAttachmentsByJob(req.params.id);
+      res.json(attachments);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch attachments' });
+    }
+  });
+
+  app.delete('/api/attachments/:id', async (req, res) => {
+    try {
+      const attachment = await storage.getFileAttachment(req.params.id);
+      if (!attachment) {
+        return res.status(404).json({ message: 'Attachment not found' });
+      }
+
+      // Delete file from disk
+      try {
+        await fs.unlink(attachment.filePath);
+      } catch (error) {
+        console.warn(`Failed to delete file from disk: ${attachment.filePath}`, error);
+      }
+
+      // Delete from database
+      await storage.deleteFileAttachment(req.params.id);
+      
+      broadcastUpdate('attachment_deleted', { id: req.params.id });
+      res.json({ message: 'Attachment deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete attachment' });
     }
   });
 
