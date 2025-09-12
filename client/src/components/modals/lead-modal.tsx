@@ -44,6 +44,7 @@ export default function LeadModal({
   const queryClient = useQueryClient();
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
+  const [activeTab, setActiveTab] = useState("details");
 
   // File attachment functionality
   const { data: attachments = [], isLoading: loadingAttachments, refetch: refetchAttachments } = useQuery<FileAttachment[]>({
@@ -174,6 +175,13 @@ export default function LeadModal({
     }
   }, [lead, form, defaultStatus, defaultDivision]);
 
+  // Reset tab to details when modal opens
+  useEffect(() => {
+    if (open) {
+      setActiveTab("details");
+    }
+  }, [open]);
+
   const onSubmit = async (data: LeadFormData) => {
     try {
       const leadData = {
@@ -215,10 +223,10 @@ export default function LeadModal({
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="details" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="details" data-testid="tab-lead-details">Lead Details</TabsTrigger>
-            <TabsTrigger value="attachments" data-testid="tab-attachments" disabled={!lead?.id}>
+            <TabsTrigger value="attachments" data-testid="tab-attachments">
               Attachments {attachments.length > 0 && `(${attachments.length})`}
             </TabsTrigger>
           </TabsList>
@@ -423,10 +431,28 @@ export default function LeadModal({
 
           <TabsContent value="attachments" className="space-y-4">
             {!lead?.id ? (
-              <div className="text-center p-8">
-                <p className="text-muted-foreground">
-                  Please save the lead first before uploading attachments.
-                </p>
+              <div className="text-center p-8 space-y-4">
+                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    File Attachments Ready
+                  </h4>
+                  <p className="text-blue-700 dark:text-blue-300 mb-4">
+                    You can attach documents, photos, contracts, and other files to this lead. 
+                    Files will be uploaded after you save the lead details.
+                  </p>
+                  <Button 
+                    onClick={() => setActiveTab("details")} 
+                    variant="outline" 
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                    data-testid="button-back-to-details"
+                  >
+                    ← Back to Lead Details
+                  </Button>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <p><strong>Supported file types:</strong> PDF, Word, Excel, Images, Text files, ZIP</p>
+                  <p><strong>File size limit:</strong> 10MB per file</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-6">
