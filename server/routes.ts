@@ -359,7 +359,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await ensureUploadsDir();
 
   // File Attachment routes
-  app.post('/api/attachments/upload', upload.single('file'), async (req, res) => {
+  app.post('/api/attachments/upload', (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+      if (err) {
+        // Handle multer errors with appropriate status codes
+        if (err.message?.includes('File type') || err.message?.includes('not allowed')) {
+          return res.status(415).json({ message: err.message }); // Unsupported Media Type
+        } else if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ message: 'File too large' }); // Payload Too Large
+        } else if (err.message?.includes('Invalid') && err.message?.includes('format')) {
+          return res.status(400).json({ message: err.message }); // Bad Request
+        } else {
+          return res.status(500).json({ message: 'Upload failed' });
+        }
+      }
+      next();
+    });
+  }, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
