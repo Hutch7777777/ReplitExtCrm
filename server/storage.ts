@@ -189,6 +189,8 @@ export class MemStorage implements IStorage {
       assignedTo: insertLead.assignedTo || null,
       notes: insertLead.notes || null,
       source: insertLead.source || null,
+      status: insertLead.status ?? "new",
+      priority: insertLead.priority ?? "medium",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
