@@ -124,7 +124,7 @@ export default function CustomerModal({ open, onOpenChange, customer }: Customer
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} data-testid="input-email" />
+                      <Input type="email" {...field} value={field.value || ""} data-testid="input-email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -138,7 +138,7 @@ export default function CustomerModal({ open, onOpenChange, customer }: Customer
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input type="tel" {...field} data-testid="input-phone" />
+                      <Input type="tel" {...field} value={field.value || ""} data-testid="input-phone" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,7 +153,7 @@ export default function CustomerModal({ open, onOpenChange, customer }: Customer
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea {...field} className="h-20" data-testid="textarea-address" />
+                    <Textarea {...field} value={field.value || ""} className="h-20" data-testid="textarea-address" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -150,7 +150,7 @@ export default function LeadModal({
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input type="tel" {...field} data-testid="input-phone" />
+                      <Input type="tel" {...field} value={field.value || ""} data-testid="input-phone" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,7 +165,7 @@ export default function LeadModal({
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} data-testid="input-email" />
+                    <Input type="email" {...field} value={field.value || ""} data-testid="input-email" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -291,6 +291,7 @@ export default function LeadModal({
                   <FormControl>
                     <Textarea 
                       {...field} 
+                      value={field.value || ""}
                       className="h-24" 
                       placeholder="Initial notes about the lead..."
                       data-testid="textarea-notes"

@@ -59,7 +59,7 @@ export interface IStorage {
   updateVendor(id: string, vendor: Partial<InsertVendor>): Promise<Vendor>;
   
   // White Label Settings
-  getWhiteLabelSettings(): Promise<WhiteLabelSettings | undefined>;
+  getWhiteLabelSettings(): Promise<WhiteLabelSettings>;
   updateWhiteLabelSettings(settings: InsertWhiteLabelSettings): Promise<WhiteLabelSettings>;
   
   // Dashboard Stats
@@ -115,6 +115,8 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      role: insertUser.role || "user",
+      isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
     };
     this.users.set(id, user);
@@ -135,6 +137,13 @@ export class MemStorage implements IStorage {
     const customer: Customer = {
       ...insertCustomer,
       id,
+      email: insertCustomer.email || null,
+      phone: insertCustomer.phone || null,
+      address: insertCustomer.address || null,
+      city: insertCustomer.city || null,
+      state: insertCustomer.state || null,
+      zipCode: insertCustomer.zipCode || null,
+      notes: insertCustomer.notes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -173,6 +182,13 @@ export class MemStorage implements IStorage {
     const lead: Lead = {
       ...insertLead,
       id,
+      customerId: insertLead.customerId || null,
+      email: insertLead.email || null,
+      phone: insertLead.phone || null,
+      estimatedValue: insertLead.estimatedValue || null,
+      assignedTo: insertLead.assignedTo || null,
+      notes: insertLead.notes || null,
+      source: insertLead.source || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -215,6 +231,15 @@ export class MemStorage implements IStorage {
     const estimate: Estimate = {
       ...insertEstimate,
       id,
+      leadId: insertEstimate.leadId || null,
+      customerId: insertEstimate.customerId || null,
+      description: insertEstimate.description || null,
+      materialsCost: insertEstimate.materialsCost || null,
+      laborCost: insertEstimate.laborCost || null,
+      status: insertEstimate.status || "draft",
+      validUntil: insertEstimate.validUntil || null,
+      createdBy: insertEstimate.createdBy || null,
+      approvedBy: insertEstimate.approvedBy || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -253,6 +278,16 @@ export class MemStorage implements IStorage {
     const job: Job = {
       ...insertJob,
       id,
+      estimateId: insertJob.estimateId || null,
+      customerId: insertJob.customerId || null,
+      description: insertJob.description || null,
+      status: insertJob.status || "scheduled",
+      scheduledStart: insertJob.scheduledStart || null,
+      actualStart: insertJob.actualStart || null,
+      scheduledEnd: insertJob.scheduledEnd || null,
+      actualEnd: insertJob.actualEnd || null,
+      assignedTo: insertJob.assignedTo || null,
+      notes: insertJob.notes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -295,6 +330,15 @@ export class MemStorage implements IStorage {
     const communication: Communication = {
       ...insertCommunication,
       id,
+      leadId: insertCommunication.leadId || null,
+      customerId: insertCommunication.customerId || null,
+      userId: insertCommunication.userId || null,
+      subject: insertCommunication.subject || null,
+      content: insertCommunication.content || null,
+      emailMessageId: insertCommunication.emailMessageId || null,
+      attachments: insertCommunication.attachments || null,
+      scheduledFor: insertCommunication.scheduledFor || null,
+      completedAt: insertCommunication.completedAt || null,
       createdAt: new Date(),
     };
     this.communications.set(id, communication);
@@ -327,6 +371,14 @@ export class MemStorage implements IStorage {
     const vendor: Vendor = {
       ...insertVendor,
       id,
+      contactPerson: insertVendor.contactPerson || null,
+      email: insertVendor.email || null,
+      phone: insertVendor.phone || null,
+      address: insertVendor.address || null,
+      category: insertVendor.category || null,
+      rating: insertVendor.rating || null,
+      notes: insertVendor.notes || null,
+      isActive: insertVendor.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -348,8 +400,8 @@ export class MemStorage implements IStorage {
   }
 
   // White Label Settings
-  async getWhiteLabelSettings(): Promise<WhiteLabelSettings | undefined> {
-    return this.whiteLabelSettings;
+  async getWhiteLabelSettings(): Promise<WhiteLabelSettings> {
+    return this.whiteLabelSettings!;
   }
 
   async updateWhiteLabelSettings(settings: InsertWhiteLabelSettings): Promise<WhiteLabelSettings> {
@@ -357,6 +409,12 @@ export class MemStorage implements IStorage {
     this.whiteLabelSettings = {
       ...settings,
       id,
+      logo: settings.logo || null,
+      primaryColor: settings.primaryColor || null,
+      secondaryColor: settings.secondaryColor || null,
+      accentColor: settings.accentColor || null,
+      domain: settings.domain || null,
+      isActive: settings.isActive ?? true,
       createdAt: this.whiteLabelSettings?.createdAt || new Date(),
       updatedAt: new Date(),
     };
@@ -392,5 +450,9 @@ export class MemStorage implements IStorage {
     };
   }
 }
+
+// Temporarily using in-memory storage while debugging database connection
+// import { DbStorage } from './dbStorage';
+// export const storage = new DbStorage();
 
 export const storage = new MemStorage();
