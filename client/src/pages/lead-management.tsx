@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, Filter, Plus } from "lucide-react";
-import Sidebar from "@/components/layout/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import StatsCards from "@/components/stats/stats-cards";
 import KanbanBoard from "@/components/kanban/kanban-board";
 import LeadModal from "@/components/modals/lead-modal";
@@ -50,13 +50,12 @@ export default function LeadManagement() {
   const divisionCounts = getDivisionCounts();
 
   return (
-    <div className="flex h-screen" data-testid="page-lead-management">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-lead-management">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 Lead Management
@@ -112,53 +111,53 @@ export default function LeadManagement() {
           <div className="mt-6">
             <StatsCards />
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Division Tabs */}
-        <div className="bg-card border-b border-border px-6 py-3">
+      {/* Division Tabs */}
+      <div className="bg-card border-b border-border px-6 py-3">
           <Tabs value={selectedDivision} onValueChange={(value) => setSelectedDivision(value as Division)}>
-            <TabsList className="grid w-fit grid-cols-3" data-testid="tabs-divisions">
-              <TabsTrigger value="rr" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                R&R Division
-                <span className="ml-2 bg-primary-foreground/20 px-2 py-1 rounded text-xs">
-                  {divisionCounts.rr}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="multi-family" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Multi-Family
-                <span className="ml-2 bg-primary-foreground/20 px-2 py-1 rounded text-xs">
-                  {divisionCounts["multi-family"]}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="single-family" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Single-Family
-                <span className="ml-2 bg-primary-foreground/20 px-2 py-1 rounded text-xs">
-                  {divisionCounts["single-family"]}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+          <TabsList className="grid w-fit grid-cols-3" data-testid="tabs-divisions">
+            <TabsTrigger value="rr" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              R&R Division
+              <span className="ml-2 bg-primary-foreground/20 px-2 py-1 rounded text-xs">
+                {divisionCounts.rr}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="multi-family" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Multi-Family
+              <span className="ml-2 bg-primary-foreground/20 px-2 py-1 rounded text-xs">
+                {divisionCounts["multi-family"]}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="single-family" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Single-Family
+              <span className="ml-2 bg-primary-foreground/20 px-2 py-1 rounded text-xs">
+                {divisionCounts["single-family"]}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-        {/* Kanban Board */}
-        <div className="flex-1 bg-muted p-6 overflow-x-auto">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="text-center">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading leads...</p>
-              </div>
+      {/* Kanban Board */}
+      <div className="flex-1 bg-muted p-6 overflow-x-auto">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading leads...</p>
             </div>
-          ) : (
-            <KanbanBoard
-              leads={filteredLeads}
-              division={selectedDivision}
-              onAddLead={handleAddLead}
-              onLeadClick={handleLeadClick}
-            />
-          )}
-        </div>
-      </main>
+          </div>
+        ) : (
+          <KanbanBoard
+            leads={filteredLeads}
+            division={selectedDivision}
+            onAddLead={handleAddLead}
+            onLeadClick={handleLeadClick}
+          />
+        )}
+      </div>
 
       {/* Lead Modal */}
       <LeadModal

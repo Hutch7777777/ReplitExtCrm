@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import Sidebar from "@/components/layout/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import StatsCards from "@/components/stats/stats-cards";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -7,13 +7,12 @@ export default function Dashboard() {
   const { isConnected } = useWebSocket();
 
   return (
-    <div className="flex h-screen" data-testid="page-dashboard">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-dashboard">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 CRM Dashboard
@@ -29,15 +28,16 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          
-          {/* Quick Stats */}
-          <div className="mt-6">
-            <StatsCards />
-          </div>
-        </header>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="mt-6">
+          <StatsCards />
+        </div>
+      </header>
 
-        {/* Main Content */}
-        <div className="flex-1 bg-muted p-6">
+      {/* Main Content */}
+      <div className="flex-1 bg-muted p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Quick Actions */}
             <div className="bg-card rounded-lg border border-border p-6">
@@ -106,7 +106,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </main>
     </div>
   );
 }
