@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,6 +14,10 @@ import { useCreateLead, useUpdateLead } from "@/hooks/use-leads";
 import { useToast } from "@/hooks/use-toast";
 import { Division, LeadStatus, Priority } from "@/types";
 import { z } from "zod";
+import { FileUpload } from "@/components/ui/file-upload";
+import { AttachmentList, FileAttachment } from "@/components/ui/attachment-list";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 const leadFormSchema = insertLeadSchema.extend({
   estimatedValue: z.string().optional(),
@@ -36,8 +41,92 @@ export default function LeadModal({
   defaultDivision = 'single-family'
 }: LeadModalProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
+
+  // File attachment functionality
+  const { data: attachments = [], isLoading: loadingAttachments, refetch: refetchAttachments } = useQuery<FileAttachment[]>({
+    queryKey: ['/api/leads', lead?.id, 'attachments'],
+    enabled: !!lead?.id && open,
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!lead?.id) throw new Error('Lead ID is required for file upload');
+      
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('leadId', lead.id);
+        formData.append('uploadedBy', 'Current User'); // TODO: Get from auth context
+        
+        const response = await fetch(`/api/attachments/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) throw new Error('Upload failed');
+        return await response.json();
+      });
+      
+      return Promise.all(uploadPromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/leads', lead?.id, 'attachments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/leads'] });
+    },
+  });
+
+  const downloadMutation = useMutation({
+    mutationFn: async (attachment: FileAttachment) => {
+      const response = await fetch(`/api/attachments/${attachment.id}/download`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.originalName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (attachmentId: string) => {
+      const response = await fetch(`/api/attachments/${attachmentId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Delete failed');
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/leads', lead?.id, 'attachments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/leads'] });
+    },
+  });
+
+  const handleFileUpload = async (files: File[]) => {
+    if (!lead?.id) {
+      toast({
+        title: "Error",
+        description: "Please save the lead first before uploading files.",
+        variant: "destructive",
+      });
+      return;
+    }
+    await uploadMutation.mutateAsync(files);
+  };
+
+  const handleFileDownload = async (attachment: FileAttachment) => {
+    await downloadMutation.mutateAsync(attachment);
+  };
+
+  const handleFileDelete = async (attachmentId: string) => {
+    await deleteMutation.mutateAsync(attachmentId);
+  };
   
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),
@@ -119,15 +208,24 @@ export default function LeadModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-lead">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="modal-lead">
         <DialogHeader>
           <DialogTitle data-testid="text-modal-title">
             {lead ? "Edit Lead" : "Add New Lead"}
           </DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="form-lead">
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details" data-testid="tab-lead-details">Lead Details</TabsTrigger>
+            <TabsTrigger value="attachments" data-testid="tab-attachments" disabled={!lead?.id}>
+              Attachments {attachments.length > 0 && `(${attachments.length})`}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details" className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="form-lead">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -302,25 +400,60 @@ export default function LeadModal({
               )}
             />
             
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                data-testid="button-cancel"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createLeadMutation.isPending || updateLeadMutation.isPending}
-                data-testid="button-save"
-              >
-                {lead ? "Update Lead" : "Create Lead"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => onOpenChange(false)}
+                    data-testid="button-cancel"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createLeadMutation.isPending || updateLeadMutation.isPending}
+                    data-testid="button-save"
+                  >
+                    {lead ? "Update Lead" : "Create Lead"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="space-y-4">
+            {!lead?.id ? (
+              <div className="text-center p-8">
+                <p className="text-muted-foreground">
+                  Please save the lead first before uploading attachments.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-medium mb-4">Upload Files</h4>
+                  <FileUpload
+                    onUpload={handleFileUpload}
+                    disabled={uploadMutation.isPending}
+                    maxFiles={10}
+                    data-testid="file-upload-component"
+                  />
+                </div>
+
+                <div>
+                  <AttachmentList
+                    attachments={attachments}
+                    isLoading={loadingAttachments}
+                    onDownload={handleFileDownload}
+                    onDelete={handleFileDelete}
+                    emptyMessage="No files attached to this lead yet."
+                    data-testid="attachment-list-component"
+                  />
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
