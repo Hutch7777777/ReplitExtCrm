@@ -84,14 +84,14 @@ export class MemStorage implements IStorage {
   private whiteLabelSettings: WhiteLabelSettings | undefined;
 
   constructor() {
-    // Initialize with default white label settings
+    // Initialize with Exterior Finishes white label settings
     this.whiteLabelSettings = {
       id: randomUUID(),
       companyName: "Exterior Finishes",
-      logo: "",
-      primaryColor: "hsl(38.23, 87.6%, 74.71%)",
-      secondaryColor: "hsl(39.27, 43.31%, 24.9%)",
-      accentColor: "hsl(74.4, 39.68%, 87.65%)",
+      logo: "/src/assets/exterior-finishes-logo.png",
+      primaryColor: "hsl(210, 60%, 45%)",
+      secondaryColor: "hsl(210, 30%, 25%)",
+      accentColor: "hsl(210, 40%, 88%)",
       domain: "",
       isActive: true,
       createdAt: new Date(),
