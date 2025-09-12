@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -36,27 +37,30 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r" data-testid="sidebar">
       <SidebarHeader className="border-b p-4">
-        <Link href="/" data-testid="link-dashboard">
-          <div className="flex items-center space-x-3 cursor-pointer">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center p-1 shrink-0">
-              <img 
-                src={exteriorFinishesLogo} 
-                alt="Exterior Finishes Logo" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-            {!isCollapsed && (
-              <div className="overflow-hidden">
-                <h1 className="text-lg font-serif font-bold text-sidebar-foreground truncate">
-                  Exterior Finishes
-                </h1>
-                <p className="text-sm text-sidebar-foreground/70 truncate">
-                  Where Service & Quality Meet
-                </p>
+        <div className="flex items-center justify-between">
+          <Link href="/" data-testid="link-dashboard" className="flex-1 min-w-0">
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center p-1 shrink-0">
+                <img 
+                  src={exteriorFinishesLogo} 
+                  alt="Exterior Finishes Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-            )}
-          </div>
-        </Link>
+              {!isCollapsed && (
+                <div className="overflow-hidden">
+                  <h1 className="text-lg font-serif font-bold text-sidebar-foreground truncate">
+                    Exterior Finishes
+                  </h1>
+                  <p className="text-sm text-sidebar-foreground/70 truncate">
+                    Where Service & Quality Meet
+                  </p>
+                </div>
+              )}
+            </div>
+          </Link>
+          <SidebarTrigger className="ml-2 shrink-0" data-testid="sidebar-toggle" />
+        </div>
       </SidebarHeader>
       
       <SidebarContent>
