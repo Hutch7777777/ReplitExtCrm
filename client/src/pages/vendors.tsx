@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Search, Plus, Edit, Star, Truck, Phone, Mail, MapPin } from "lucide-react";
-import Sidebar from "@/components/layout/sidebar";
 import VendorModal from "@/components/modals/vendor-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useVendors } from "@/hooks/use-vendors";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { Vendor } from "@shared/schema";
@@ -67,12 +67,12 @@ export default function Vendors() {
   };
 
   return (
-    <div className="flex h-screen" data-testid="page-vendors">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-vendors">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 Vendors
@@ -87,33 +87,35 @@ export default function Vendors() {
                 </span>
               )}
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                <Input
-                  type="text"
-                  placeholder="Search vendors..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2"
-                  data-testid="input-search"
-                />
-              </div>
-
-              <Button
-                onClick={handleAddVendor}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                data-testid="button-add-vendor"
-              >
-                <Plus className="mr-2" size={16} />
-                Add Vendor
-              </Button>
-            </div>
           </div>
-        </header>
 
-        <div className="flex-1 bg-muted p-6">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input
+                type="text"
+                placeholder="Search vendors..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2"
+                data-testid="input-search"
+              />
+            </div>
+
+            <Button
+              onClick={handleAddVendor}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              data-testid="button-add-vendor"
+            >
+              <Plus className="mr-2" size={16} />
+              Add Vendor
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-muted p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4">
@@ -182,7 +184,7 @@ export default function Vendors() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {filteredVendors.map((vendor) => (
-                <Card key={vendor.id} className="hover:shadow-md transition-shadow p-4 md:p-8 pt-6" data-testid={`card-vendor-${vendor.id}`}>
+                <Card key={vendor.id} className="hover:shadow-md transition-shadow" data-testid={`card-vendor-${vendor.id}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg" data-testid={`text-vendor-name-${vendor.id}`}>
@@ -268,7 +270,6 @@ export default function Vendors() {
             </div>
           )}
         </div>
-      </main>
 
       <VendorModal
         open={isModalOpen}
