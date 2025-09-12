@@ -1,8 +1,8 @@
-import Sidebar from "@/components/layout/sidebar";
 import StatsCards from "@/components/stats/stats-cards";
 import { RevenueChart, DivisionChart } from "@/components/charts/revenue-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Download, Filter, Calendar } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -10,12 +10,12 @@ export default function Reporting() {
   const { isConnected } = useWebSocket();
 
   return (
-    <div className="flex h-screen" data-testid="page-reporting">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="flex flex-col h-screen" data-testid="page-reporting">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <SidebarTrigger data-testid="button-toggle-sidebar" />
             <div>
               <h2 className="text-2xl font-serif font-bold text-card-foreground">
                 Reporting
@@ -30,29 +30,31 @@ export default function Reporting() {
                 </span>
               )}
             </div>
-
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" data-testid="button-filter">
-                <Filter className="mr-2" size={16} />
-                Filter
-              </Button>
-              <Button variant="outline" data-testid="button-date-range">
-                <Calendar className="mr-2" size={16} />
-                Date Range
-              </Button>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-export">
-                <Download className="mr-2" size={16} />
-                Export
-              </Button>
-            </div>
           </div>
 
-          <div className="mt-6">
-            <StatsCards />
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" data-testid="button-filter">
+              <Filter className="mr-2" size={16} />
+              Filter
+            </Button>
+            <Button variant="outline" data-testid="button-date-range">
+              <Calendar className="mr-2" size={16} />
+              Date Range
+            </Button>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-export">
+              <Download className="mr-2" size={16} />
+              Export
+            </Button>
           </div>
-        </header>
+        </div>
 
-        <div className="flex-1 bg-muted p-6 overflow-y-auto">
+        <div className="mt-6">
+          <StatsCards />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-muted p-6 overflow-y-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <RevenueChart />
             <DivisionChart />
@@ -276,7 +278,6 @@ export default function Reporting() {
             </Card>
           </div>
         </div>
-      </main>
     </div>
   );
 }
