@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Building, Users, Calculator, MessageSquare, Hammer, NotebookTabs, ChartLine, Truck, Calendar, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import exteriorFinishesLogo from "@/assets/exterior-finishes-logo.png";
 
 const navigationItems = [
   { path: "/leads", label: "Lead Management", icon: Users },
@@ -22,15 +23,19 @@ export default function Sidebar() {
       <div className="p-6 border-b border-secondary/20">
         <Link href="/" data-testid="link-dashboard">
           <div className="flex items-center space-x-3 cursor-pointer">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Building className="text-primary-foreground text-lg" size={20} />
+            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1">
+              <img 
+                src={exteriorFinishesLogo} 
+                alt="Exterior Finishes Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="text-lg font-serif font-bold text-secondary-foreground">
                 Exterior Finishes
               </h1>
               <p className="text-sm text-secondary-foreground/70">
-                CRM Dashboard
+                Where Service & Quality Meet
               </p>
             </div>
           </div>
