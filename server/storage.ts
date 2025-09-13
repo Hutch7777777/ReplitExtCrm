@@ -8,7 +8,8 @@ import {
   type Vendor, type InsertVendor,
   type FileAttachment, type InsertFileAttachment,
   type WhiteLabelSettings, type InsertWhiteLabelSettings,
-  type UserSettings, type InsertUserSettings
+  type UserSettings, type InsertUserSettings,
+  type TeamMember, type InsertTeamMember
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -83,6 +84,16 @@ export interface IStorage {
   getWhiteLabelSettings(): Promise<WhiteLabelSettings>;
   updateWhiteLabelSettings(settings: InsertWhiteLabelSettings): Promise<WhiteLabelSettings>;
   
+  // Team Members
+  getTeamMembers(): Promise<TeamMember[]>;
+  getTeamMember(id: string): Promise<TeamMember | undefined>;
+  getTeamMembersByDivision(division: string): Promise<TeamMember[]>;
+  getTeamMembersByPosition(position: string): Promise<TeamMember[]>;
+  getTeamMemberByUserId(userId: string): Promise<TeamMember | undefined>;
+  createTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
+  updateTeamMember(id: string, teamMember: Partial<InsertTeamMember>): Promise<TeamMember>;
+  deleteTeamMember(id: string): Promise<void>;
+  
   // Dashboard Stats
   getDashboardStats(): Promise<{
     totalLeads: number;
@@ -104,6 +115,7 @@ export class MemStorage implements IStorage {
   private communications: Map<string, Communication> = new Map();
   private vendors: Map<string, Vendor> = new Map();
   private fileAttachments: Map<string, FileAttachment> = new Map();
+  private teamMembers: Map<string, TeamMember> = new Map();
   private whiteLabelSettings: WhiteLabelSettings | undefined;
 
   constructor() {
@@ -688,6 +700,60 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     return this.whiteLabelSettings;
+  }
+
+  // Team Members
+  async getTeamMembers(): Promise<TeamMember[]> {
+    return Array.from(this.teamMembers.values());
+  }
+
+  async getTeamMember(id: string): Promise<TeamMember | undefined> {
+    return this.teamMembers.get(id);
+  }
+
+  async getTeamMembersByDivision(division: string): Promise<TeamMember[]> {
+    return Array.from(this.teamMembers.values()).filter(member => member.division === division && member.isActive);
+  }
+
+  async getTeamMembersByPosition(position: string): Promise<TeamMember[]> {
+    return Array.from(this.teamMembers.values()).filter(member => member.position === position && member.isActive);
+  }
+
+  async getTeamMemberByUserId(userId: string): Promise<TeamMember | undefined> {
+    return Array.from(this.teamMembers.values()).find(member => member.userId === userId);
+  }
+
+  async createTeamMember(insertTeamMember: InsertTeamMember): Promise<TeamMember> {
+    const id = randomUUID();
+    const teamMember: TeamMember = {
+      ...insertTeamMember,
+      id,
+      hireDate: insertTeamMember.hireDate || null,
+      phone: insertTeamMember.phone || null,
+      notes: insertTeamMember.notes || null,
+      isActive: insertTeamMember.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.teamMembers.set(id, teamMember);
+    return teamMember;
+  }
+
+  async updateTeamMember(id: string, teamMemberUpdate: Partial<InsertTeamMember>): Promise<TeamMember> {
+    const existing = this.teamMembers.get(id);
+    if (!existing) throw new Error("Team member not found");
+    
+    const teamMember: TeamMember = {
+      ...existing,
+      ...teamMemberUpdate,
+      updatedAt: new Date(),
+    };
+    this.teamMembers.set(id, teamMember);
+    return teamMember;
+  }
+
+  async deleteTeamMember(id: string): Promise<void> {
+    this.teamMembers.delete(id);
   }
 
   // Dashboard Stats
