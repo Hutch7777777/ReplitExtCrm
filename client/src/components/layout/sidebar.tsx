@@ -103,12 +103,11 @@ export default function AppSidebar() {
                 <p className="text-sm font-medium text-sidebar-foreground truncate">John Smith</p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">Sales Manager</p>
               </div>
-              <button 
-                className="text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0"
-                data-testid="button-settings"
-              >
-                <Settings size={16} />
-              </button>
+              <Link href="/settings" data-testid="button-settings">
+                <button className="text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0">
+                  <Settings size={16} />
+                </button>
+              </Link>
             </>
           )}
         </div>

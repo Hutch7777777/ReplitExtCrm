@@ -15,6 +15,7 @@ import Customers from "@/pages/customers";
 import Reporting from "@/pages/reporting";
 import Vendors from "@/pages/vendors";
 import Calendar from "@/pages/calendar";
+import Settings from "@/pages/settings";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/reporting" component={Reporting} />
                 <Route path="/vendors" component={Vendors} />
                 <Route path="/calendar" component={Calendar} />
+                <Route path="/settings" component={Settings} />
                 <Route component={NotFound} />
               </Switch>
             </div>
