@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Building, Users, MapPin, Phone } from "lucide-react";
+import { useTeamMembers } from "@/hooks/use-team-members";
+import TeamMemberModal from "@/components/modals/team-member-modal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Building, Users, MapPin, Phone, UserPlus, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +39,10 @@ const divisions = [
 
 export default function CompanySettings() {
   const [isLoading, setIsLoading] = useState(false);
+  const [teamMemberModalOpen, setTeamMemberModalOpen] = useState(false);
+  const [selectedTeamMember, setSelectedTeamMember] = useState(undefined);
   const { toast } = useToast();
+  const { data: teamMembers = [] } = useTeamMembers();
 
   const form = useForm<CompanySettings>({
     resolver: zodResolver(companySchema),
@@ -335,6 +341,14 @@ export default function CompanySettings() {
           {isLoading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
+
+      {/* Team Member Modal */}
+      <TeamMemberModal
+        open={teamMemberModalOpen}
+        onOpenChange={setTeamMemberModalOpen}
+        teamMember={selectedTeamMember}
+        availableUsers={[]} // TODO: Fetch available users
+      />
     </div>
   );
 }

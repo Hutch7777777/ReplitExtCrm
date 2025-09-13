@@ -16,7 +16,8 @@ import {
   insertVendorSchema,
   insertFileAttachmentSchema,
   insertWhiteLabelSettingsSchema,
-  insertUserSettingsSchema
+  insertUserSettingsSchema,
+  insertTeamMemberSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -242,6 +243,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(vendor);
     } catch (error) {
       res.status(400).json({ message: 'Invalid vendor data' });
+    }
+  });
+
+  // Team members routes
+  app.get('/api/team-members', async (req, res) => {
+    try {
+      const { division, position } = req.query;
+      let teamMembers;
+      
+      if (division) {
+        teamMembers = await storage.getTeamMembersByDivision(division as string);
+      } else if (position) {
+        teamMembers = await storage.getTeamMembersByPosition(position as string);
+      } else {
+        teamMembers = await storage.getTeamMembers();
+      }
+      
+      res.json(teamMembers);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch team members' });
+    }
+  });
+
+  app.get('/api/team-members/:id', async (req, res) => {
+    try {
+      const teamMember = await storage.getTeamMember(req.params.id);
+      if (!teamMember) {
+        return res.status(404).json({ message: 'Team member not found' });
+      }
+      res.json(teamMember);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch team member' });
+    }
+  });
+
+  app.post('/api/team-members', async (req, res) => {
+    try {
+      const teamMemberData = insertTeamMemberSchema.parse(req.body);
+      const teamMember = await storage.createTeamMember(teamMemberData);
+      broadcastUpdate('team_member_created', teamMember);
+      res.json(teamMember);
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid team member data' });
+    }
+  });
+
+  app.patch('/api/team-members/:id', async (req, res) => {
+    try {
+      const teamMemberData = insertTeamMemberSchema.partial().parse(req.body);
+      const teamMember = await storage.updateTeamMember(req.params.id, teamMemberData);
+      broadcastUpdate('team_member_updated', teamMember);
+      res.json(teamMember);
+    } catch (error) {
+      res.status(400).json({ message: 'Failed to update team member' });
+    }
+  });
+
+  app.delete('/api/team-members/:id', async (req, res) => {
+    try {
+      await storage.deleteTeamMember(req.params.id);
+      broadcastUpdate('team_member_deleted', { id: req.params.id });
+      res.json({ message: 'Team member deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete team member' });
     }
   });
 
