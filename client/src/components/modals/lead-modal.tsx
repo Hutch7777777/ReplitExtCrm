@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -204,6 +204,7 @@ export default function LeadModal({
       const leadData = {
         ...data,
         estimatedValue: data.estimatedValue ? data.estimatedValue : null,
+        assignedTo: data.assignedTo?.trim() ? data.assignedTo : null,
       };
 
       if (lead) {
@@ -238,6 +239,9 @@ export default function LeadModal({
           <DialogTitle data-testid="text-modal-title">
             {lead ? "Edit Lead" : "Add New Lead"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Lead form to create or edit lead information
+          </DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -417,7 +421,7 @@ export default function LeadModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assigned To</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
                     <FormControl>
                       <SelectTrigger data-testid="select-assigned-to">
                         <SelectValue placeholder="Select team member" />
@@ -425,11 +429,13 @@ export default function LeadModal({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="">Unassigned</SelectItem>
-                      {teamMembers.map((member) => (
-                        <SelectItem key={member.id} value={member.id}>
-                          {member.firstName} {member.lastName} ({member.role})
-                        </SelectItem>
-                      ))}
+                      {(teamMembers || [])
+                        .filter(m => m && m.id != null && m.id !== "")
+                        .map((member) => (
+                          <SelectItem key={String(member.id)} value={String(member.id)}>
+                            {member.firstName} {member.lastName} ({member.role})
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

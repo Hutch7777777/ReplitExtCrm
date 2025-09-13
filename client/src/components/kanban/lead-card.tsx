@@ -27,7 +27,7 @@ export default function LeadCard({ lead, onClick, isDragging }: LeadCardProps) {
 
   const getAssignedUserName = (assignedTo: string | null) => {
     if (!assignedTo) return 'Unassigned';
-    const member = teamMembers.find(m => m.id === assignedTo);
+    const member = teamMembers.find(m => String(m.id) === String(assignedTo));
     return member ? `${member.firstName} ${member.lastName}` : 'Unknown User';
   };
 
