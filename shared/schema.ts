@@ -13,6 +13,7 @@ export const jobStatusEnum = pgEnum("job_status", ["scheduled", "in_progress", "
 export const communicationTypeEnum = pgEnum("communication_type", ["email", "phone", "meeting", "note"]);
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 export const notificationFrequencyEnum = pgEnum("notification_frequency", ["immediate", "daily", "weekly", "never"]);
+export const teamPositionEnum = pgEnum("team_position", ["owner", "operations-manager", "sales-marketing-manager", "estimator", "field-management", "accounting"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -184,6 +185,20 @@ export const whiteLabelSettings = pgTable("white_label_settings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Team members table
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  position: teamPositionEnum("position").notNull(),
+  division: divisionEnum("division").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  hireDate: timestamp("hire_date"),
+  phone: text("phone"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -242,6 +257,12 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
   updatedAt: true,
 });
 
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -272,3 +293,6 @@ export type InsertFileAttachment = z.infer<typeof insertFileAttachmentSchema>;
 
 export type WhiteLabelSettings = typeof whiteLabelSettings.$inferSelect;
 export type InsertWhiteLabelSettings = z.infer<typeof insertWhiteLabelSettingsSchema>;
+
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
