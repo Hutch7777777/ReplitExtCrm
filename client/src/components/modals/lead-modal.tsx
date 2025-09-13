@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,14 +18,6 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { AttachmentList, FileAttachment } from "@/components/ui/attachment-list";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-
-interface TeamMember {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-}
 
 const leadFormSchema = insertLeadSchema.extend({
   estimatedValue: z.string().optional(),
@@ -53,12 +45,6 @@ export default function LeadModal({
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
   const [activeTab, setActiveTab] = useState("details");
-
-  // Fetch team members for assignment dropdown
-  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
-    queryKey: ['/api/users'],
-    enabled: open,
-  });
 
   // File attachment functionality
   const { data: attachments = [], isLoading: loadingAttachments, refetch: refetchAttachments } = useQuery<FileAttachment[]>({
@@ -155,7 +141,6 @@ export default function LeadModal({
       priority: "medium",
       status: defaultStatus,
       estimatedValue: "",
-      assignedTo: "",
       notes: "",
     },
   });
@@ -172,7 +157,6 @@ export default function LeadModal({
         priority: lead.priority,
         status: lead.status,
         estimatedValue: lead.estimatedValue || "",
-        assignedTo: lead.assignedTo || "",
         notes: lead.notes || "",
       });
     } else {
@@ -186,7 +170,6 @@ export default function LeadModal({
         priority: "medium",
         status: defaultStatus,
         estimatedValue: "",
-        assignedTo: "",
         notes: "",
       });
     }
@@ -204,7 +187,6 @@ export default function LeadModal({
       const leadData = {
         ...data,
         estimatedValue: data.estimatedValue ? data.estimatedValue : null,
-        assignedTo: data.assignedTo?.trim() ? data.assignedTo : null,
       };
 
       if (lead) {
@@ -239,9 +221,6 @@ export default function LeadModal({
           <DialogTitle data-testid="text-modal-title">
             {lead ? "Edit Lead" : "Add New Lead"}
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            Lead form to create or edit lead information
-          </DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -414,34 +393,6 @@ export default function LeadModal({
                 )}
               />
             </div>
-            
-            <FormField
-              control={form.control}
-              name="assignedTo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assigned To</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-assigned-to">
-                        <SelectValue placeholder="Select team member" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
-                      {(teamMembers || [])
-                        .filter(m => m && m.id != null && m.id !== "")
-                        .map((member) => (
-                          <SelectItem key={String(member.id)} value={String(member.id)}>
-                            {member.firstName} {member.lastName} ({member.role})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <FormField
               control={form.control}

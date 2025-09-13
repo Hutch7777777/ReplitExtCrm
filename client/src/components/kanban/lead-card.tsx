@@ -3,15 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User, Phone, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useQuery } from '@tanstack/react-query';
-
-interface TeamMember {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-}
 
 interface LeadCardProps {
   lead: Lead;
@@ -20,17 +11,6 @@ interface LeadCardProps {
 }
 
 export default function LeadCard({ lead, onClick, isDragging }: LeadCardProps) {
-  // Fetch team members to display assigned user name
-  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
-    queryKey: ['/api/users'],
-  });
-
-  const getAssignedUserName = (assignedTo: string | null) => {
-    if (!assignedTo) return 'Unassigned';
-    const member = teamMembers.find(m => String(m.id) === String(assignedTo));
-    return member ? `${member.firstName} ${member.lastName}` : 'Unknown User';
-  };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -107,7 +87,7 @@ export default function LeadCard({ lead, onClick, isDragging }: LeadCardProps) {
         <div className="flex items-center mt-3 text-xs text-muted-foreground">
           <User size={12} className="mr-1" />
           <span data-testid={`text-assigned-to-${lead.id}`}>
-            {getAssignedUserName(lead.assignedTo)}
+            {lead.assignedTo || 'Unassigned'}
           </span>
           
           {lead.phone && (
