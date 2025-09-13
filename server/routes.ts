@@ -64,6 +64,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Users routes
+  app.get('/api/users', async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Return only safe user fields for team member selection
+      const safeUsers = users.map(user => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role
+      }));
+      res.json(safeUsers);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
   // Leads routes
   app.get('/api/leads', async (req, res) => {
     try {

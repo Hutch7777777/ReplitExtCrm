@@ -16,6 +16,10 @@ import type { IStorage } from "./storage";
 export class DbStorage implements IStorage {
   
   // Users
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.isActive, true));
+  }
+
   async getUser(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
@@ -28,6 +32,12 @@ export class DbStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User> {
+    const result = await db.update(users).set(user).where(eq(users.id, id)).returning();
+    if (result.length === 0) throw new Error("User not found");
     return result[0];
   }
 
