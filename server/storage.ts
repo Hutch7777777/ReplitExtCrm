@@ -7,7 +7,8 @@ import {
   type Communication, type InsertCommunication,
   type Vendor, type InsertVendor,
   type FileAttachment, type InsertFileAttachment,
-  type WhiteLabelSettings, type InsertWhiteLabelSettings
+  type WhiteLabelSettings, type InsertWhiteLabelSettings,
+  type UserSettings, type InsertUserSettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -16,6 +17,12 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
+  
+  // User Settings
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  createUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
+  updateUserSettings(userId: string, settings: Partial<InsertUserSettings>): Promise<UserSettings>;
   
   // Customers
   getCustomers(): Promise<Customer[]>;
@@ -89,6 +96,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<string, User> = new Map();
+  private userSettings: Map<string, UserSettings> = new Map();
   private customers: Map<string, Customer> = new Map();
   private leads: Map<string, Lead> = new Map();
   private estimates: Map<string, Estimate> = new Map();
@@ -112,6 +120,20 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    // Initialize with test user
+    const testUser = {
+      id: "user_1",
+      username: "john.smith",
+      password: "password123",
+      email: "john.smith@company.com", 
+      firstName: "John",
+      lastName: "Smith",
+      role: "Sales Manager",
+      isActive: true,
+      createdAt: new Date(),
+    };
+    this.users.set("user_1", testUser);
   }
 
   // Users
@@ -136,6 +158,66 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: string, updateUser: Partial<InsertUser>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const updatedUser: User = { ...user, ...updateUser };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  // User Settings
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    return Array.from(this.userSettings.values()).find(
+      (settings) => settings.userId === userId,
+    );
+  }
+
+  async createUserSettings(insertSettings: InsertUserSettings): Promise<UserSettings> {
+    const id = randomUUID();
+    const settings: UserSettings = {
+      userId: insertSettings.userId,
+      theme: insertSettings.theme || "system",
+      language: insertSettings.language || "en", 
+      timezone: insertSettings.timezone || "America/New_York",
+      emailNotifications: insertSettings.emailNotifications ?? true,
+      emailDigestFrequency: insertSettings.emailDigestFrequency || "daily",
+      newLeadEmail: insertSettings.newLeadEmail ?? true,
+      leadAssignmentEmail: insertSettings.leadAssignmentEmail ?? true,
+      estimateReminderEmail: insertSettings.estimateReminderEmail ?? true,
+      deadlineAlertEmail: insertSettings.deadlineAlertEmail ?? true,
+      weeklyReportEmail: insertSettings.weeklyReportEmail ?? false,
+      newLeadInApp: insertSettings.newLeadInApp ?? true,
+      leadAssignmentInApp: insertSettings.leadAssignmentInApp ?? true,
+      estimateReminderInApp: insertSettings.estimateReminderInApp ?? true,
+      deadlineAlertInApp: insertSettings.deadlineAlertInApp ?? true,
+      urgentLeadSMS: insertSettings.urgentLeadSMS ?? false,
+      deadlineAlertSMS: insertSettings.deadlineAlertSMS ?? false,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userSettings.set(id, settings);
+    return settings;
+  }
+
+  async updateUserSettings(userId: string, updateSettings: Partial<InsertUserSettings>): Promise<UserSettings> {
+    const settings = await this.getUserSettings(userId);
+    if (!settings) {
+      // Create default settings if they don't exist
+      return this.createUserSettings({ userId, ...updateSettings });
+    }
+    const updatedSettings: UserSettings = {
+      ...settings,
+      ...updateSettings,
+      updatedAt: new Date(),
+    };
+    this.userSettings.set(settings.id, updatedSettings);
+    return updatedSettings;
   }
 
   // Customers

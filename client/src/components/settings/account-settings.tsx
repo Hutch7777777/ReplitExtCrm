@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { User, Lock, Palette, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +19,18 @@ const accountSchema = z.object({
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   role: z.string().min(1, "Role is required"),
+});
+
+type AccountSettings = z.infer<typeof accountSchema>;
+
+const preferencesSchema = z.object({
   timezone: z.string().min(1, "Timezone is required"),
   language: z.string().min(1, "Language is required"),
   theme: z.enum(["light", "dark", "system"]),
   emailNotifications: z.boolean(),
 });
 
-type AccountSettings = z.infer<typeof accountSchema>;
+type PreferencesSettings = z.infer<typeof preferencesSchema>;
 
 const timezones = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -39,43 +46,121 @@ const languages = [
 ];
 
 export default function AccountSettings() {
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // For now, using a dummy user ID since we don't have authentication
+  const userId = "user_1";
 
-  const form = useForm<AccountSettings>({
+  // Fetch user account data
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ['/api/settings/account', userId],
+    enabled: !!userId,
+  });
+
+  // Fetch user preferences data  
+  const { data: preferencesData, isLoading: preferencesLoading } = useQuery({
+    queryKey: ['/api/settings/preferences', userId],
+    enabled: !!userId,
+  });
+
+  const accountForm = useForm<AccountSettings>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
-      firstName: "John",
-      lastName: "Smith",
-      email: "john.smith@company.com",
-      role: "Sales Manager",
+      firstName: "",
+      lastName: "",
+      email: "",
+      role: "",
+    },
+    values: userData ? {
+      firstName: userData.firstName || "",
+      lastName: userData.lastName || "",
+      email: userData.email || "",
+      role: userData.role || "",
+    } : undefined,
+  });
+
+  const preferencesForm = useForm<PreferencesSettings>({
+    resolver: zodResolver(preferencesSchema),
+    defaultValues: {
       timezone: "America/New_York",
       language: "en",
       theme: "system",
       emailNotifications: true,
     },
+    values: preferencesData ? {
+      timezone: preferencesData.timezone || "America/New_York",
+      language: preferencesData.language || "en",
+      theme: preferencesData.theme || "system",
+      emailNotifications: preferencesData.emailNotifications ?? true,
+    } : undefined,
   });
 
-  const onSubmit = async (data: AccountSettings) => {
-    setIsLoading(true);
-    try {
-      // TODO: Implement API call to save account settings
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+  // Mutation for account updates
+  const accountMutation = useMutation({
+    mutationFn: (data: AccountSettings) => 
+      apiRequest(`/api/settings/account/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/account', userId] });
       toast({
         title: "Settings saved",
         description: "Your account settings have been updated successfully.",
       });
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  // Mutation for preferences updates
+  const preferencesMutation = useMutation({
+    mutationFn: (data: PreferencesSettings) =>
+      apiRequest(`/api/settings/preferences/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/preferences', userId] });
+      toast({
+        title: "Settings saved",
+        description: "Your preferences have been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save preferences. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onAccountSubmit = (data: AccountSettings) => {
+    accountMutation.mutate(data);
   };
+
+  const onPreferencesSubmit = (data: PreferencesSettings) => {
+    preferencesMutation.mutate(data);
+  };
+
+  if (userLoading || preferencesLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <p>Loading account settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -91,11 +176,11 @@ export default function AccountSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Form {...accountForm}>
+            <form onSubmit={accountForm.handleSubmit(onAccountSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
+                  control={accountForm.control}
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
@@ -108,7 +193,7 @@ export default function AccountSettings() {
                   )}
                 />
                 <FormField
-                  control={form.control}
+                  control={accountForm.control}
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
@@ -123,7 +208,7 @@ export default function AccountSettings() {
               </div>
               
               <FormField
-                control={form.control}
+                control={accountForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -137,7 +222,7 @@ export default function AccountSettings() {
               />
               
               <FormField
-                control={form.control}
+                control={accountForm.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -166,11 +251,11 @@ export default function AccountSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
+          <Form {...preferencesForm}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
+                  control={preferencesForm.control}
                   name="timezone"
                   render={({ field }) => (
                     <FormItem>
@@ -195,7 +280,7 @@ export default function AccountSettings() {
                 />
                 
                 <FormField
-                  control={form.control}
+                  control={preferencesForm.control}
                   name="language"
                   render={({ field }) => (
                     <FormItem>
@@ -221,7 +306,7 @@ export default function AccountSettings() {
               </div>
               
               <FormField
-                control={form.control}
+                control={preferencesForm.control}
                 name="theme"
                 render={({ field }) => (
                   <FormItem>
@@ -244,7 +329,7 @@ export default function AccountSettings() {
               />
               
               <FormField
-                control={form.control}
+                control={preferencesForm.control}
                 name="emailNotifications"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -295,14 +380,22 @@ export default function AccountSettings() {
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
+      {/* Save Buttons */}
+      <div className="flex justify-end space-x-4">
         <Button 
-          onClick={form.handleSubmit(onSubmit)}
-          disabled={isLoading}
+          onClick={preferencesForm.handleSubmit(onPreferencesSubmit)}
+          disabled={preferencesMutation.isPending}
+          variant="outline"
+          data-testid="button-save-preferences"
+        >
+          {preferencesMutation.isPending ? "Saving..." : "Save Preferences"}
+        </Button>
+        <Button 
+          onClick={accountForm.handleSubmit(onAccountSubmit)}
+          disabled={accountMutation.isPending}
           data-testid="button-save-account"
         >
-          {isLoading ? "Saving..." : "Save Changes"}
+          {accountMutation.isPending ? "Saving..." : "Save Account"}
         </Button>
       </div>
     </div>

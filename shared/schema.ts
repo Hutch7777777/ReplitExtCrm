@@ -11,6 +11,8 @@ export const projectTypeEnum = pgEnum("project_type", ["siding", "repair", "repl
 export const estimateStatusEnum = pgEnum("estimate_status", ["draft", "pending", "approved", "rejected"]);
 export const jobStatusEnum = pgEnum("job_status", ["scheduled", "in_progress", "completed", "cancelled"]);
 export const communicationTypeEnum = pgEnum("communication_type", ["email", "phone", "meeting", "note"]);
+export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
+export const notificationFrequencyEnum = pgEnum("notification_frequency", ["immediate", "daily", "weekly", "never"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -23,6 +25,30 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User Settings table
+export const userSettings = pgTable("user_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  theme: themeEnum("theme").notNull().default("system"),
+  language: text("language").notNull().default("en"),
+  timezone: text("timezone").notNull().default("America/New_York"),
+  emailNotifications: boolean("email_notifications").notNull().default(true),
+  emailDigestFrequency: notificationFrequencyEnum("email_digest_frequency").notNull().default("daily"),
+  newLeadEmail: boolean("new_lead_email").notNull().default(true),
+  leadAssignmentEmail: boolean("lead_assignment_email").notNull().default(true),
+  estimateReminderEmail: boolean("estimate_reminder_email").notNull().default(true),
+  deadlineAlertEmail: boolean("deadline_alert_email").notNull().default(true),
+  weeklyReportEmail: boolean("weekly_report_email").notNull().default(false),
+  newLeadInApp: boolean("new_lead_in_app").notNull().default(true),
+  leadAssignmentInApp: boolean("lead_assignment_in_app").notNull().default(true),
+  estimateReminderInApp: boolean("estimate_reminder_in_app").notNull().default(true),
+  deadlineAlertInApp: boolean("deadline_alert_in_app").notNull().default(true),
+  urgentLeadSMS: boolean("urgent_lead_sms").notNull().default(false),
+  deadlineAlertSMS: boolean("deadline_alert_sms").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Customers table
@@ -210,9 +236,18 @@ export const insertWhiteLabelSettingsSchema = createInsertSchema(whiteLabelSetti
   updatedAt: true,
 });
 
+export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;

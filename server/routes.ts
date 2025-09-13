@@ -14,7 +14,8 @@ import {
   insertCommunicationSchema,
   insertVendorSchema,
   insertFileAttachmentSchema,
-  insertWhiteLabelSettingsSchema 
+  insertWhiteLabelSettingsSchema,
+  insertUserSettingsSchema
 } from "@shared/schema";
 import { sendEmail, getEmails, getCalendarEvents, createCalendarEvent } from "./outlookClient";
 
@@ -539,6 +540,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(event);
     } catch (error) {
       res.status(500).json({ message: 'Failed to create calendar event' });
+    }
+  });
+
+  // Settings routes
+  app.get('/api/settings/account/:userId', async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch user account' });
+    }
+  });
+
+  app.put('/api/settings/account/:userId', async (req, res) => {
+    try {
+      const { firstName, lastName, email, role } = req.body;
+      const updatedUser = await storage.updateUser(req.params.userId, {
+        firstName,
+        lastName, 
+        email,
+        role
+      });
+      broadcastUpdate('user_updated', updatedUser);
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update user account' });
+    }
+  });
+
+  app.get('/api/settings/preferences/:userId', async (req, res) => {
+    try {
+      const settings = await storage.getUserSettings(req.params.userId);
+      if (!settings) {
+        // Return default settings if none exist
+        const defaultSettings = await storage.createUserSettings({ userId: req.params.userId });
+        return res.json(defaultSettings);
+      }
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch user settings' });
+    }
+  });
+
+  app.put('/api/settings/preferences/:userId', async (req, res) => {
+    try {
+      const validatedSettings = insertUserSettingsSchema.parse({
+        userId: req.params.userId,
+        ...req.body
+      });
+      const updatedSettings = await storage.updateUserSettings(req.params.userId, validatedSettings);
+      broadcastUpdate('user_settings_updated', updatedSettings);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error('Settings update error:', error);
+      res.status(400).json({ message: 'Invalid settings data' });
     }
   });
 
