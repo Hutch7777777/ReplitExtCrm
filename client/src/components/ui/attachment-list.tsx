@@ -74,6 +74,37 @@ export function AttachmentList({
     }
   };
 
+  // Thumbnail component with fallback to icon
+  const ThumbnailDisplay = ({ attachment }: { attachment: FileAttachment }) => {
+    const [thumbnailError, setThumbnailError] = useState(false);
+    const [thumbnailLoading, setThumbnailLoading] = useState(true);
+
+    if (!attachment.mimeType.startsWith('image/') || thumbnailError) {
+      return getFileIcon(attachment.mimeType);
+    }
+
+    return (
+      <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded overflow-hidden border">
+        <img
+          src={`/api/attachments/${attachment.id}/thumbnail?size=48`}
+          alt={attachment.originalName}
+          className="w-full h-full object-cover"
+          onLoad={() => setThumbnailLoading(false)}
+          onError={() => {
+            setThumbnailError(true);
+            setThumbnailLoading(false);
+          }}
+          style={{ display: thumbnailLoading ? 'none' : 'block' }}
+        />
+        {thumbnailLoading && (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const getFileIcon = (mimeType: string) => {
     if (mimeType.startsWith('image/')) {
       return <Image className="w-5 h-5 text-blue-500" />;
@@ -134,7 +165,7 @@ export function AttachmentList({
             data-testid={`attachment-item-${attachment.id}`}
           >
             <div className="flex items-center space-x-3 min-w-0 flex-1">
-              {getFileIcon(attachment.mimeType)}
+              <ThumbnailDisplay attachment={attachment} />
               
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate" title={attachment.originalName}>
