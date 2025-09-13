@@ -19,6 +19,14 @@ import { AttachmentList, FileAttachment } from "@/components/ui/attachment-list"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
+interface TeamMember {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 const leadFormSchema = insertLeadSchema.extend({
   estimatedValue: z.string().optional(),
 });
@@ -45,6 +53,12 @@ export default function LeadModal({
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
   const [activeTab, setActiveTab] = useState("details");
+
+  // Fetch team members for assignment dropdown
+  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
+    queryKey: ['/api/users'],
+    enabled: open,
+  });
 
   // File attachment functionality
   const { data: attachments = [], isLoading: loadingAttachments, refetch: refetchAttachments } = useQuery<FileAttachment[]>({
@@ -141,6 +155,7 @@ export default function LeadModal({
       priority: "medium",
       status: defaultStatus,
       estimatedValue: "",
+      assignedTo: "",
       notes: "",
     },
   });
@@ -157,6 +172,7 @@ export default function LeadModal({
         priority: lead.priority,
         status: lead.status,
         estimatedValue: lead.estimatedValue || "",
+        assignedTo: lead.assignedTo || "",
         notes: lead.notes || "",
       });
     } else {
@@ -170,6 +186,7 @@ export default function LeadModal({
         priority: "medium",
         status: defaultStatus,
         estimatedValue: "",
+        assignedTo: "",
         notes: "",
       });
     }
@@ -393,6 +410,32 @@ export default function LeadModal({
                 )}
               />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="assignedTo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned To</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-assigned-to">
+                        <SelectValue placeholder="Select team member" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Unassigned</SelectItem>
+                      {teamMembers.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.firstName} {member.lastName} ({member.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
