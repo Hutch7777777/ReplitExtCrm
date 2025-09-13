@@ -474,10 +474,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'File is not an image' });
       }
 
-      // Get thumbnail size (default to 100px)
-      const size = parseInt(req.query.size as string) || 100;
-      const maxSize = 300; // Maximum allowed thumbnail size
-      const thumbnailSize = Math.min(size, maxSize);
+      // Get thumbnail size with proper validation
+      const requested = Number.parseInt(String(req.query.size), 10);
+      const defaultSize = 100;
+      const maxSize = 300;
+      const minSize = 16;
+      
+      if (req.query.size && (!isFinite(requested) || requested < minSize)) {
+        return res.status(422).json({ message: 'Invalid size parameter. Must be a number >= 16' });
+      }
+      
+      const thumbnailSize = Math.max(minSize, Math.min(isFinite(requested) ? requested : defaultSize, maxSize));
 
       try {
         // Check if file exists

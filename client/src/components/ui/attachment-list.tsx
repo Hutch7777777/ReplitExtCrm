@@ -89,12 +89,16 @@ export function AttachmentList({
           src={`/api/attachments/${attachment.id}/thumbnail?size=48`}
           alt={attachment.originalName}
           className="w-full h-full object-cover"
+          loading="lazy"
+          width="48"
+          height="48"
           onLoad={() => setThumbnailLoading(false)}
           onError={() => {
             setThumbnailError(true);
             setThumbnailLoading(false);
           }}
           style={{ display: thumbnailLoading ? 'none' : 'block' }}
+          data-testid={`img-thumbnail-${attachment.id}`}
         />
         {thumbnailLoading && (
           <div className="w-full h-full flex items-center justify-center">
