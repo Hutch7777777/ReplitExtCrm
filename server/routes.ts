@@ -17,6 +17,15 @@ import {
   insertWhiteLabelSettingsSchema,
   insertUserSettingsSchema
 } from "@shared/schema";
+import { z } from "zod";
+
+// Safe account update schema - only allow specific fields
+const accountUpdateSchema = z.object({
+  firstName: z.string().min(2).max(50),
+  lastName: z.string().min(2).max(50),  
+  email: z.string().email(),
+  role: z.string().min(1).max(100), // Consider restricting to enum in production
+}).partial();
 import { sendEmail, getEmails, getCalendarEvents, createCalendarEvent } from "./outlookClient";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -546,48 +555,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Settings routes
   app.get('/api/settings/account/:userId', async (req, res) => {
     try {
+      // Basic access control - only allow known test user for now  
+      if (req.params.userId !== 'user_1') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
       const user = await storage.getUser(req.params.userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-      res.json(user);
+      
+      // Return only safe user fields - never include password
+      const safeUser = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role
+      };
+      res.json(safeUser);
     } catch (error) {
+      console.error('Account fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch user account' });
     }
   });
 
   app.put('/api/settings/account/:userId', async (req, res) => {
     try {
-      const { firstName, lastName, email, role } = req.body;
-      const updatedUser = await storage.updateUser(req.params.userId, {
-        firstName,
-        lastName, 
-        email,
-        role
-      });
-      broadcastUpdate('user_updated', updatedUser);
-      res.json(updatedUser);
+      // Basic access control - only allow known test user for now
+      if (req.params.userId !== 'user_1') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Validate and whitelist input fields
+      const validatedData = accountUpdateSchema.parse(req.body);
+      
+      const updatedUser = await storage.updateUser(req.params.userId, validatedData);
+      
+      // Return and broadcast only safe user fields
+      const safeUser = {
+        id: updatedUser.id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        role: updatedUser.role
+      };
+      
+      broadcastUpdate('user_updated', safeUser);
+      res.json(safeUser);
     } catch (error) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid input data' });
+      }
+      console.error('Account update error:', error);
       res.status(500).json({ message: 'Failed to update user account' });
     }
   });
 
   app.get('/api/settings/preferences/:userId', async (req, res) => {
     try {
-      const settings = await storage.getUserSettings(req.params.userId);
+      // Basic access control - only allow known test user for now
+      if (req.params.userId !== 'user_1') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      let settings = await storage.getUserSettings(req.params.userId);
       if (!settings) {
-        // Return default settings if none exist
-        const defaultSettings = await storage.createUserSettings({ userId: req.params.userId });
-        return res.json(defaultSettings);
+        // Create and return default settings if none exist
+        settings = await storage.createUserSettings({ userId: req.params.userId });
       }
       res.json(settings);
     } catch (error) {
+      console.error('Preferences fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch user settings' });
     }
   });
 
   app.put('/api/settings/preferences/:userId', async (req, res) => {
     try {
+      // Basic access control - only allow known test user for now
+      if (req.params.userId !== 'user_1') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
       const validatedSettings = insertUserSettingsSchema.parse({
         userId: req.params.userId,
         ...req.body
@@ -596,8 +646,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate('user_settings_updated', updatedSettings);
       res.json(updatedSettings);
     } catch (error) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid settings data' });
+      }
       console.error('Settings update error:', error);
-      res.status(400).json({ message: 'Invalid settings data' });
+      res.status(500).json({ message: 'Failed to update user settings' });
     }
   });
 

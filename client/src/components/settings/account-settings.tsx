@@ -54,13 +54,13 @@ export default function AccountSettings() {
 
   // Fetch user account data
   const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ['/api/settings/account', userId],
+    queryKey: [`/api/settings/account/${userId}`],
     enabled: !!userId,
   });
 
   // Fetch user preferences data  
   const { data: preferencesData, isLoading: preferencesLoading } = useQuery({
-    queryKey: ['/api/settings/preferences', userId],
+    queryKey: [`/api/settings/preferences/${userId}`],
     enabled: !!userId,
   });
 
@@ -105,7 +105,7 @@ export default function AccountSettings() {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings/account', userId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/settings/account/${userId}`] });
       toast({
         title: "Settings saved",
         description: "Your account settings have been updated successfully.",
@@ -129,7 +129,7 @@ export default function AccountSettings() {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings/preferences', userId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/settings/preferences/${userId}`] });
       toast({
         title: "Settings saved",
         description: "Your preferences have been updated successfully.",
