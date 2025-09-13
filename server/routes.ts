@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
+import sharp from "sharp";
 import { randomUUID } from "crypto";
 import { 
   insertLeadSchema,
@@ -457,6 +458,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(path.resolve(attachment.filePath));
     } catch (error) {
       res.status(500).json({ message: 'Failed to download file' });
+    }
+  });
+
+  // Thumbnail endpoint for image attachments
+  app.get('/api/attachments/:id/thumbnail', async (req, res) => {
+    try {
+      const attachment = await storage.getFileAttachment(req.params.id);
+      if (!attachment) {
+        return res.status(404).json({ message: 'Attachment not found' });
+      }
+
+      // Check if file is an image
+      if (!attachment.mimeType.startsWith('image/')) {
+        return res.status(400).json({ message: 'File is not an image' });
+      }
+
+      // Get thumbnail size (default to 100px)
+      const size = parseInt(req.query.size as string) || 100;
+      const maxSize = 300; // Maximum allowed thumbnail size
+      const thumbnailSize = Math.min(size, maxSize);
+
+      try {
+        // Check if file exists
+        await fs.access(attachment.filePath);
+
+        // Generate thumbnail using Sharp
+        const thumbnailBuffer = await sharp(attachment.filePath)
+          .resize(thumbnailSize, thumbnailSize, {
+            fit: 'cover',
+            position: 'center'
+          })
+          .jpeg({ quality: 85 }) // Convert to JPEG for consistent output
+          .toBuffer();
+
+        // Set cache headers
+        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Content-Length', thumbnailBuffer.length);
+        
+        res.send(thumbnailBuffer);
+      } catch (fileError) {
+        console.warn(`Failed to generate thumbnail for ${attachment.filePath}:`, fileError);
+        res.status(404).json({ message: 'File not found or cannot be processed' });
+      }
+    } catch (error) {
+      console.error('Thumbnail generation error:', error);
+      res.status(500).json({ message: 'Failed to generate thumbnail' });
     }
   });
 
