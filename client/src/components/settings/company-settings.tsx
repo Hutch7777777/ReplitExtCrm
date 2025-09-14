@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useTeamMembers } from "@/hooks/use-team-members";
+import { useTeamMembers, useDeleteTeamMember } from "@/hooks/use-team-members";
 import TeamMemberModal from "@/components/modals/team-member-modal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Building, Users, MapPin, Phone, UserPlus, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,8 +42,11 @@ export default function CompanySettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [teamMemberModalOpen, setTeamMemberModalOpen] = useState(false);
   const [selectedTeamMember, setSelectedTeamMember] = useState(undefined);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState(null);
   const { toast } = useToast();
   const { data: teamMembers = [] } = useTeamMembers();
+  const deleteTeamMemberMutation = useDeleteTeamMember();
 
   const form = useForm<CompanySettings>({
     resolver: zodResolver(companySchema),
@@ -78,6 +82,26 @@ export default function CompanySettings() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteTeamMember = async () => {
+    if (!memberToDelete) return;
+
+    try {
+      await deleteTeamMemberMutation.mutateAsync(memberToDelete.id);
+      toast({
+        title: "Team Member Removed",
+        description: `${memberToDelete.position.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} has been removed from the team.`,
+      });
+      setDeleteDialogOpen(false);
+      setMemberToDelete(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove team member. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -327,6 +351,89 @@ export default function CompanySettings() {
                 />
               </div>
             </Form>
+
+            {/* Team Members Section */}
+            <div className="space-y-4 pt-6 border-t">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Team Members</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedTeamMember(undefined);
+                    setTeamMemberModalOpen(true);
+                  }}
+                  data-testid="button-add-team-member"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Team Member
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {teamMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="p-4 border rounded-lg bg-card"
+                    data-testid={`card-team-member-${member.id}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="font-medium text-sm">
+                          {member.position.split('-').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {member.division.charAt(0).toUpperCase() + member.division.slice(1)} Division
+                        </div>
+                        {member.phone && (
+                          <div className="text-xs text-muted-foreground">
+                            📞 {member.phone}
+                          </div>
+                        )}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" data-testid={`button-menu-${member.id}`}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedTeamMember(member);
+                              setTeamMemberModalOpen(true);
+                            }}
+                            data-testid={`button-edit-${member.id}`}
+                          >
+                            Edit Member
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                              setMemberToDelete(member);
+                              setDeleteDialogOpen(true);
+                            }}
+                            data-testid={`button-remove-${member.id}`}
+                          >
+                            Remove Member
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {teamMembers.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">No team members added yet.</p>
+                  <p className="text-xs">Click "Add Team Member" to get started.</p>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -349,6 +456,38 @@ export default function CompanySettings() {
         teamMember={selectedTeamMember}
         availableUsers={[]} // TODO: Fetch available users
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent data-testid="dialog-delete-team-member">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove{" "}
+              <strong>
+                {memberToDelete?.position.split('-').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ')}
+              </strong>{" "}
+              from the {memberToDelete?.division.charAt(0).toUpperCase() + memberToDelete?.division.slice(1)} division?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTeamMember}
+              disabled={deleteTeamMemberMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              {deleteTeamMemberMutation.isPending ? "Removing..." : "Remove Member"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -127,6 +127,9 @@ export default function TeamMemberModal({
           <DialogTitle data-testid="text-modal-title">
             {teamMember ? "Edit Team Member" : "Add New Team Member"}
           </DialogTitle>
+          <DialogDescription>
+            {teamMember ? "Update team member information and assignments" : "Add a new team member to your organization"}
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
