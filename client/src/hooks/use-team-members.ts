@@ -5,32 +5,39 @@ import type { TeamMember, InsertTeamMember } from "@shared/schema";
 export function useTeamMembers() {
   return useQuery({
     queryKey: ['/api/team-members'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/team-members');
+      return response.json();
+    },
   });
 }
 
 export function useTeamMembersByDivision(division: string) {
   return useQuery({
     queryKey: ['/api/team-members', division],
-    queryFn: () => apiRequest(`/api/team-members?division=${division}`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/team-members?division=${division}`);
+      return response.json();
+    },
   });
 }
 
 export function useTeamMembersByPosition(position: string) {
   return useQuery({
     queryKey: ['/api/team-members', position],
-    queryFn: () => apiRequest(`/api/team-members?position=${position}`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/team-members?position=${position}`);
+      return response.json();
+    },
   });
 }
 
 export function useCreateTeamMember() {
   return useMutation({
-    mutationFn: (teamMember: InsertTeamMember) => apiRequest('/api/team-members', {
-      method: 'POST',
-      body: JSON.stringify(teamMember),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }),
+    mutationFn: async (teamMember: InsertTeamMember) => {
+      const response = await apiRequest('POST', '/api/team-members', teamMember);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
     },
@@ -39,14 +46,10 @@ export function useCreateTeamMember() {
 
 export function useUpdateTeamMember() {
   return useMutation({
-    mutationFn: ({ id, teamMember }: { id: string; teamMember: Partial<InsertTeamMember> }) =>
-      apiRequest(`/api/team-members/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(teamMember),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }),
+    mutationFn: async ({ id, teamMember }: { id: string; teamMember: Partial<InsertTeamMember> }) => {
+      const response = await apiRequest('PATCH', `/api/team-members/${id}`, teamMember);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
     },
@@ -55,9 +58,10 @@ export function useUpdateTeamMember() {
 
 export function useDeleteTeamMember() {
   return useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/team-members/${id}`, {
-      method: 'DELETE',
-    }),
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/team-members/${id}`);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
     },

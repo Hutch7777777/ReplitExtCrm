@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertLeadSchema, Lead } from "@shared/schema";
+import { insertLeadSchema, Lead, TeamMember, User } from "@shared/schema";
 import { useCreateLead, useUpdateLead } from "@/hooks/use-leads";
 import { useToast } from "@/hooks/use-toast";
+import { useTeamMembers } from "@/hooks/use-team-members";
 import { Division, LeadStatus, Priority } from "@/types";
 import { z } from "zod";
 import { FileUpload } from "@/components/ui/file-upload";
@@ -21,6 +22,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 const leadFormSchema = insertLeadSchema.extend({
   estimatedValue: z.string().optional(),
+  assignedTo: z.string().optional(),
 });
 
 type LeadFormData = z.infer<typeof leadFormSchema>;
@@ -45,6 +47,7 @@ export default function LeadModal({
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
   const [activeTab, setActiveTab] = useState("details");
+  const { data: teamMembers = [], isLoading: isLoadingTeamMembers } = useTeamMembers();
 
   // File attachment functionality
   const { data: attachments = [], isLoading: loadingAttachments, refetch: refetchAttachments } = useQuery<FileAttachment[]>({
@@ -142,6 +145,7 @@ export default function LeadModal({
       status: defaultStatus,
       estimatedValue: "",
       notes: "",
+      assignedTo: undefined,
     },
   });
 
@@ -158,6 +162,7 @@ export default function LeadModal({
         status: lead.status,
         estimatedValue: lead.estimatedValue || "",
         notes: lead.notes || "",
+        assignedTo: lead.assignedTo || undefined,
       });
     } else {
       form.reset({
@@ -171,6 +176,7 @@ export default function LeadModal({
         status: defaultStatus,
         estimatedValue: "",
         notes: "",
+        assignedTo: undefined,
       });
     }
   }, [lead, form, defaultStatus, defaultDivision]);
@@ -187,6 +193,7 @@ export default function LeadModal({
       const leadData = {
         ...data,
         estimatedValue: data.estimatedValue ? data.estimatedValue : null,
+        assignedTo: data.assignedTo || undefined,
       };
 
       if (lead) {
@@ -221,6 +228,9 @@ export default function LeadModal({
           <DialogTitle data-testid="text-modal-title">
             {lead ? "Edit Lead" : "Add New Lead"}
           </DialogTitle>
+          <DialogDescription>
+            {lead ? "Update lead information and attachments" : "Create a new lead and manage its details"}
+          </DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -393,6 +403,45 @@ export default function LeadModal({
                 )}
               />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="assignedTo"
+              render={({ field }) => {
+                const members = Array.isArray(teamMembers) ? teamMembers.filter(m => m?.userId && typeof m.userId === 'string' && m.userId.length > 0) : [];
+                return (
+                  <FormItem>
+                    <FormLabel>Assigned To</FormLabel>
+                    {isLoadingTeamMembers ? (
+                      <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                        Loading team members...
+                      </div>
+                    ) : (
+                      <Select onValueChange={(value) => field.onChange(value || undefined)} value={field.value || undefined}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-assigned-to">
+                            <SelectValue placeholder="Select team member (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {members.map((member) => (
+                            <SelectItem key={member.userId} value={String(member.userId)}>
+                              {member.userId}
+                            </SelectItem>
+                          ))}
+                          {members.length === 0 && (
+                            <div className="px-2 py-1 text-sm text-muted-foreground">
+                              No team members available
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
             
             <FormField
               control={form.control}
