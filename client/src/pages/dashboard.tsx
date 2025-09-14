@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import StatsCards from "@/components/stats/stats-cards";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
 export default function Dashboard() {
   const { isConnected } = useWebSocket();
@@ -28,6 +29,9 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+          
+          {/* User Profile Dropdown */}
+          <UserProfileDropdown />
         </div>
 
         {/* Quick Stats */}
