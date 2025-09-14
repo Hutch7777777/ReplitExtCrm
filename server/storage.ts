@@ -9,9 +9,13 @@ import {
   type FileAttachment, type InsertFileAttachment,
   type WhiteLabelSettings, type InsertWhiteLabelSettings,
   type UserSettings, type InsertUserSettings,
-  type TeamMember, type InsertTeamMember
+  type TeamMember, type InsertTeamMember,
+  users, customers, leads, estimates, jobs, communications, vendors,
+  fileAttachments, whiteLabelSettings, userSettings, teamMembers
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -183,6 +187,9 @@ export class MemStorage implements IStorage {
       const updatedUser: User = {
         ...existingUser,
         ...userData,
+        firstName: userData.firstName ?? existingUser.firstName,
+        lastName: userData.lastName ?? existingUser.lastName,
+        email: userData.email ?? existingUser.email,
         updatedAt: new Date(),
       };
       this.users.set(userData.id, updatedUser);
@@ -191,6 +198,9 @@ export class MemStorage implements IStorage {
       // Create new user
       const newUser: User = {
         ...userData,
+        firstName: userData.firstName ?? null,
+        lastName: userData.lastName ?? null,
+        email: userData.email ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -817,4 +827,253 @@ export class MemStorage implements IStorage {
 // import { DbStorage } from './dbStorage';
 // export const storage = new DbStorage();
 
-export const storage = new MemStorage();
+// DatabaseStorage implementation for production
+export class DatabaseStorage implements IStorage {
+  // User operations - required for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    if (!username) return undefined;
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, updateUser: Partial<InsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(updateUser)
+      .where(eq(users.id, id))
+      .returning();
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        firstName: userData.firstName ?? null,
+        lastName: userData.lastName ?? null,
+        email: userData.email ?? null,
+      })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          firstName: userData.firstName ?? null,
+          lastName: userData.lastName ?? null,
+          email: userData.email ?? null,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  // Stub implementations for other methods (keeping MemStorage behavior temporarily)
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    return memStorage.getUserSettings(userId);
+  }
+
+  async createUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    return memStorage.createUserSettings(settings);
+  }
+
+  async updateUserSettings(userId: string, settings: Partial<InsertUserSettings>): Promise<UserSettings> {
+    return memStorage.updateUserSettings(userId, settings);
+  }
+
+  async getCustomers(): Promise<Customer[]> {
+    return memStorage.getCustomers();
+  }
+
+  async getCustomer(id: string): Promise<Customer | undefined> {
+    return memStorage.getCustomer(id);
+  }
+
+  async createCustomer(customer: InsertCustomer): Promise<Customer> {
+    return memStorage.createCustomer(customer);
+  }
+
+  async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer> {
+    return memStorage.updateCustomer(id, customer);
+  }
+
+  async getLeads(): Promise<Lead[]> {
+    return memStorage.getLeads();
+  }
+
+  async getLeadsByDivision(division: string): Promise<Lead[]> {
+    return memStorage.getLeadsByDivision(division);
+  }
+
+  async getLead(id: string): Promise<Lead | undefined> {
+    return memStorage.getLead(id);
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    return memStorage.createLead(lead);
+  }
+
+  async updateLead(id: string, lead: Partial<InsertLead>): Promise<Lead> {
+    return memStorage.updateLead(id, lead);
+  }
+
+  async deleteLead(id: string): Promise<void> {
+    return memStorage.deleteLead(id);
+  }
+
+  async getEstimates(): Promise<Estimate[]> {
+    return memStorage.getEstimates();
+  }
+
+  async getEstimate(id: string): Promise<Estimate | undefined> {
+    return memStorage.getEstimate(id);
+  }
+
+  async getEstimatesByCustomer(customerId: string): Promise<Estimate[]> {
+    return memStorage.getEstimatesByCustomer(customerId);
+  }
+
+  async createEstimate(estimate: InsertEstimate): Promise<Estimate> {
+    return memStorage.createEstimate(estimate);
+  }
+
+  async updateEstimate(id: string, estimate: Partial<InsertEstimate>): Promise<Estimate> {
+    return memStorage.updateEstimate(id, estimate);
+  }
+
+  async getJobs(): Promise<Job[]> {
+    return memStorage.getJobs();
+  }
+
+  async getJob(id: string): Promise<Job | undefined> {
+    return memStorage.getJob(id);
+  }
+
+  async getJobsByCustomer(customerId: string): Promise<Job[]> {
+    return memStorage.getJobsByCustomer(customerId);
+  }
+
+  async createJob(job: InsertJob): Promise<Job> {
+    return memStorage.createJob(job);
+  }
+
+  async updateJob(id: string, job: Partial<InsertJob>): Promise<Job> {
+    return memStorage.updateJob(id, job);
+  }
+
+  async getCommunications(): Promise<Communication[]> {
+    return memStorage.getCommunications();
+  }
+
+  async getCommunication(id: string): Promise<Communication | undefined> {
+    return memStorage.getCommunication(id);
+  }
+
+  async getCommunicationsByLead(leadId: string): Promise<Communication[]> {
+    return memStorage.getCommunicationsByLead(leadId);
+  }
+
+  async getCommunicationsByCustomer(customerId: string): Promise<Communication[]> {
+    return memStorage.getCommunicationsByCustomer(customerId);
+  }
+
+  async createCommunication(communication: InsertCommunication): Promise<Communication> {
+    return memStorage.createCommunication(communication);
+  }
+
+  async updateCommunication(id: string, communication: Partial<InsertCommunication>): Promise<Communication> {
+    return memStorage.updateCommunication(id, communication);
+  }
+
+  async getVendors(): Promise<Vendor[]> {
+    return memStorage.getVendors();
+  }
+
+  async getVendor(id: string): Promise<Vendor | undefined> {
+    return memStorage.getVendor(id);
+  }
+
+  async createVendor(vendor: InsertVendor): Promise<Vendor> {
+    return memStorage.createVendor(vendor);
+  }
+
+  async updateVendor(id: string, vendor: Partial<InsertVendor>): Promise<Vendor> {
+    return memStorage.updateVendor(id, vendor);
+  }
+
+  async getFileAttachments(): Promise<FileAttachment[]> {
+    return memStorage.getFileAttachments();
+  }
+
+  async getFileAttachment(id: string): Promise<FileAttachment | undefined> {
+    return memStorage.getFileAttachment(id);
+  }
+
+  async getFileAttachmentsByLead(leadId: string): Promise<FileAttachment[]> {
+    return memStorage.getFileAttachmentsByLead(leadId);
+  }
+
+  async getFileAttachmentsByEstimate(estimateId: string): Promise<FileAttachment[]> {
+    return memStorage.getFileAttachmentsByEstimate(estimateId);
+  }
+
+  async getFileAttachmentsByJob(jobId: string): Promise<FileAttachment[]> {
+    return memStorage.getFileAttachmentsByJob(jobId);
+  }
+
+  async createFileAttachment(attachment: InsertFileAttachment): Promise<FileAttachment> {
+    return memStorage.createFileAttachment(attachment);
+  }
+
+  async deleteFileAttachment(id: string): Promise<void> {
+    return memStorage.deleteFileAttachment(id);
+  }
+
+  async getWhiteLabelSettings(): Promise<WhiteLabelSettings | undefined> {
+    return memStorage.getWhiteLabelSettings();
+  }
+
+  async updateWhiteLabelSettings(settings: Partial<InsertWhiteLabelSettings>): Promise<WhiteLabelSettings> {
+    return memStorage.updateWhiteLabelSettings(settings);
+  }
+
+  async getTeamMembers(): Promise<TeamMember[]> {
+    return memStorage.getTeamMembers();
+  }
+
+  async getTeamMember(id: string): Promise<TeamMember | undefined> {
+    return memStorage.getTeamMember(id);
+  }
+
+  async createTeamMember(teamMember: InsertTeamMember): Promise<TeamMember> {
+    return memStorage.createTeamMember(teamMember);
+  }
+
+  async updateTeamMember(id: string, teamMember: Partial<InsertTeamMember>): Promise<TeamMember> {
+    return memStorage.updateTeamMember(id, teamMember);
+  }
+
+  async getDashboardStats(): Promise<any> {
+    return memStorage.getDashboardStats();
+  }
+}
+
+// Create instances
+const memStorage = new MemStorage();
+export const storage = new DatabaseStorage();

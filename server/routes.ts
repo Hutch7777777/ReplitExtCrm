@@ -727,7 +727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       broadcastUpdate('user_updated', safeUser);
       res.json(safeUser);
-    } catch (error) {
+    } catch (error: any) {
       if (error.name === 'ZodError') {
         return res.status(400).json({ message: 'Invalid input data' });
       }
@@ -769,7 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedSettings = await storage.updateUserSettings(req.params.userId, validatedSettings);
       broadcastUpdate('user_settings_updated', updatedSettings);
       res.json(updatedSettings);
-    } catch (error) {
+    } catch (error: any) {
       if (error.name === 'ZodError') {
         return res.status(400).json({ message: 'Invalid settings data' });
       }
