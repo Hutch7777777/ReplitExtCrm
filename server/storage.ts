@@ -1057,6 +1057,14 @@ export class DatabaseStorage implements IStorage {
     return memStorage.getTeamMembers();
   }
 
+  async getTeamMembersByDivision(division: string): Promise<TeamMember[]> {
+    return memStorage.getTeamMembersByDivision(division);
+  }
+
+  async getTeamMembersByPosition(position: string): Promise<TeamMember[]> {
+    return memStorage.getTeamMembersByPosition(position);
+  }
+
   async getTeamMember(id: string): Promise<TeamMember | undefined> {
     return memStorage.getTeamMember(id);
   }
@@ -1067,6 +1075,10 @@ export class DatabaseStorage implements IStorage {
 
   async updateTeamMember(id: string, teamMember: Partial<InsertTeamMember>): Promise<TeamMember> {
     return memStorage.updateTeamMember(id, teamMember);
+  }
+
+  async deleteTeamMember(id: string): Promise<void> {
+    return memStorage.deleteTeamMember(id);
   }
 
   async getDashboardStats(): Promise<any> {

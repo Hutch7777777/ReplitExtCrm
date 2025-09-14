@@ -60,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Dashboard stats
-  app.get('/api/dashboard/stats', async (req, res) => {
+  app.get('/api/dashboard/stats', isAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats();
       res.json(stats);
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leads routes
-  app.get('/api/leads', async (req, res) => {
+  app.get('/api/leads', isAuthenticated, async (req, res) => {
     try {
       const { division } = req.query;
       const leads = division 
@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leads/:id', async (req, res) => {
+  app.get('/api/leads/:id', isAuthenticated, async (req, res) => {
     try {
       const lead = await storage.getLead(req.params.id);
       if (!lead) {
@@ -94,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads', async (req, res) => {
+  app.post('/api/leads', isAuthenticated, async (req, res) => {
     try {
       const leadData = insertLeadSchema.parse(req.body);
       const lead = await storage.createLead(leadData);
@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/leads/:id', async (req, res) => {
+  app.patch('/api/leads/:id', isAuthenticated, async (req, res) => {
     try {
       const leadData = insertLeadSchema.partial().parse(req.body);
       const lead = await storage.updateLead(req.params.id, leadData);
@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/leads/:id', async (req, res) => {
+  app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
     try {
       await storage.deleteLead(req.params.id);
       broadcastUpdate('lead_deleted', { id: req.params.id });
@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customers routes
-  app.get('/api/customers', async (req, res) => {
+  app.get('/api/customers', isAuthenticated, async (req, res) => {
     try {
       const customers = await storage.getCustomers();
       res.json(customers);
@@ -136,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/customers', async (req, res) => {
+  app.post('/api/customers', isAuthenticated, async (req, res) => {
     try {
       const customerData = insertCustomerSchema.parse(req.body);
       const customer = await storage.createCustomer(customerData);
@@ -147,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Estimates routes
-  app.get('/api/estimates', async (req, res) => {
+  app.get('/api/estimates', isAuthenticated, async (req, res) => {
     try {
       const estimates = await storage.getEstimates();
       res.json(estimates);
@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/estimates', async (req, res) => {
+  app.post('/api/estimates', isAuthenticated, async (req, res) => {
     try {
       const estimateData = insertEstimateSchema.parse(req.body);
       const estimate = await storage.createEstimate(estimateData);
@@ -167,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/estimates/:id', async (req, res) => {
+  app.patch('/api/estimates/:id', isAuthenticated, async (req, res) => {
     try {
       const estimateData = insertEstimateSchema.partial().parse(req.body);
       const estimate = await storage.updateEstimate(req.params.id, estimateData);
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Jobs routes
-  app.get('/api/jobs', async (req, res) => {
+  app.get('/api/jobs', isAuthenticated, async (req, res) => {
     try {
       const jobs = await storage.getJobs();
       res.json(jobs);
@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/jobs', async (req, res) => {
+  app.post('/api/jobs', isAuthenticated, async (req, res) => {
     try {
       const jobData = insertJobSchema.parse(req.body);
       const job = await storage.createJob(jobData);
@@ -200,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Communications routes
-  app.get('/api/communications', async (req, res) => {
+  app.get('/api/communications', isAuthenticated, async (req, res) => {
     try {
       const { leadId, customerId } = req.query;
       let communications;
@@ -219,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/communications', async (req, res) => {
+  app.post('/api/communications', isAuthenticated, async (req, res) => {
     try {
       const commData = insertCommunicationSchema.parse(req.body);
       const communication = await storage.createCommunication(commData);
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vendors routes
-  app.get('/api/vendors', async (req, res) => {
+  app.get('/api/vendors', isAuthenticated, async (req, res) => {
     try {
       const vendors = await storage.getVendors();
       res.json(vendors);
@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/vendors', async (req, res) => {
+  app.post('/api/vendors', isAuthenticated, async (req, res) => {
     try {
       const vendorData = insertVendorSchema.parse(req.body);
       const vendor = await storage.createVendor(vendorData);
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Team members routes
-  app.get('/api/team-members', async (req, res) => {
+  app.get('/api/team-members', isAuthenticated, async (req, res) => {
     try {
       const { division, position } = req.query;
       let teamMembers;
@@ -270,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/team-members/:id', async (req, res) => {
+  app.get('/api/team-members/:id', isAuthenticated, async (req, res) => {
     try {
       const teamMember = await storage.getTeamMember(req.params.id);
       if (!teamMember) {
@@ -282,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/team-members', async (req, res) => {
+  app.post('/api/team-members', isAuthenticated, async (req, res) => {
     try {
       const teamMemberData = insertTeamMemberSchema.parse(req.body);
       const teamMember = await storage.createTeamMember(teamMemberData);
@@ -293,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/team-members/:id', async (req, res) => {
+  app.patch('/api/team-members/:id', isAuthenticated, async (req, res) => {
     try {
       const teamMemberData = insertTeamMemberSchema.partial().parse(req.body);
       const teamMember = await storage.updateTeamMember(req.params.id, teamMemberData);
@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/team-members/:id', async (req, res) => {
+  app.delete('/api/team-members/:id', isAuthenticated, async (req, res) => {
     try {
       await storage.deleteTeamMember(req.params.id);
       broadcastUpdate('team_member_deleted', { id: req.params.id });
@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // White label settings routes
-  app.get('/api/white-label', async (req, res) => {
+  app.get('/api/white-label', isAuthenticated, async (req, res) => {
     try {
       const settings = await storage.getWhiteLabelSettings();
       res.json(settings);
@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/white-label', async (req, res) => {
+  app.patch('/api/white-label', isAuthenticated, async (req, res) => {
     try {
       const settingsData = insertWhiteLabelSettingsSchema.parse(req.body);
       const settings = await storage.updateWhiteLabelSettings(settingsData);
@@ -439,7 +439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await ensureUploadsDir();
 
   // File Attachment routes
-  app.post('/api/attachments/upload', (req, res, next) => {
+  app.post('/api/attachments/upload', isAuthenticated, (req, res, next) => {
     upload.single('file')(req, res, (err) => {
       if (err) {
         // Handle multer errors with appropriate status codes
@@ -499,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/attachments/:id/download', async (req, res) => {
+  app.get('/api/attachments/:id/download', isAuthenticated, async (req, res) => {
     try {
       const attachment = await storage.getFileAttachment(req.params.id);
       if (!attachment) {
@@ -531,7 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Thumbnail endpoint for image attachments
-  app.get('/api/attachments/:id/thumbnail', async (req, res) => {
+  app.get('/api/attachments/:id/thumbnail', isAuthenticated, async (req, res) => {
     try {
       const attachment = await storage.getFileAttachment(req.params.id);
       if (!attachment) {
@@ -584,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leads/:id/attachments', async (req, res) => {
+  app.get('/api/leads/:id/attachments', isAuthenticated, async (req, res) => {
     try {
       const attachments = await storage.getFileAttachmentsByLead(req.params.id);
       res.json(attachments);
@@ -593,7 +593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/estimates/:id/attachments', async (req, res) => {
+  app.get('/api/estimates/:id/attachments', isAuthenticated, async (req, res) => {
     try {
       const attachments = await storage.getFileAttachmentsByEstimate(req.params.id);
       res.json(attachments);
@@ -602,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/jobs/:id/attachments', async (req, res) => {
+  app.get('/api/jobs/:id/attachments', isAuthenticated, async (req, res) => {
     try {
       const attachments = await storage.getFileAttachmentsByJob(req.params.id);
       res.json(attachments);
@@ -611,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/attachments/:id', async (req, res) => {
+  app.delete('/api/attachments/:id', isAuthenticated, async (req, res) => {
     try {
       const attachment = await storage.getFileAttachment(req.params.id);
       if (!attachment) {
@@ -636,7 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Outlook integration routes
-  app.post('/api/outlook/send-email', async (req, res) => {
+  app.post('/api/outlook/send-email', isAuthenticated, async (req, res) => {
     try {
       const { to, subject, content, cc } = req.body;
       await sendEmail(to, subject, content, cc);
@@ -646,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/outlook/emails', async (req, res) => {
+  app.get('/api/outlook/emails', isAuthenticated, async (req, res) => {
     try {
       const { folder = 'inbox', top = 25 } = req.query;
       const emails = await getEmails(folder as string, Number(top));
@@ -656,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/outlook/calendar', async (req, res) => {
+  app.get('/api/outlook/calendar', isAuthenticated, async (req, res) => {
     try {
       const { startTime, endTime } = req.query;
       const events = await getCalendarEvents(startTime as string, endTime as string);
@@ -666,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/outlook/calendar', async (req, res) => {
+  app.post('/api/outlook/calendar', isAuthenticated, async (req, res) => {
     try {
       const { subject, start, end, attendees, location } = req.body;
       const event = await createCalendarEvent(subject, start, end, attendees, location);
@@ -677,7 +677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Settings routes
-  app.get('/api/settings/account/:userId', async (req, res) => {
+  app.get('/api/settings/account/:userId', isAuthenticated, async (req, res) => {
     try {
       // Basic access control - only allow known test user for now  
       if (req.params.userId !== 'user_1') {
@@ -704,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/settings/account/:userId', async (req, res) => {
+  app.put('/api/settings/account/:userId', isAuthenticated, async (req, res) => {
     try {
       // Basic access control - only allow known test user for now
       if (req.params.userId !== 'user_1') {
@@ -736,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/settings/preferences/:userId', async (req, res) => {
+  app.get('/api/settings/preferences/:userId', isAuthenticated, async (req, res) => {
     try {
       // Basic access control - only allow known test user for now
       if (req.params.userId !== 'user_1') {
@@ -755,7 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/settings/preferences/:userId', async (req, res) => {
+  app.put('/api/settings/preferences/:userId', isAuthenticated, async (req, res) => {
     try {
       // Basic access control - only allow known test user for now
       if (req.params.userId !== 'user_1') {
