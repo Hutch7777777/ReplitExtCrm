@@ -465,11 +465,14 @@ export default function CompanySettings() {
             <AlertDialogDescription>
               Are you sure you want to remove{" "}
               <strong>
-                {memberToDelete?.position.split('-').map(word => 
+                {memberToDelete?.position?.split('-')?.map(word => 
                   word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ')}
+                )?.join(' ') ?? 'this team member'}
               </strong>{" "}
-              from the {memberToDelete?.division.charAt(0).toUpperCase() + memberToDelete?.division.slice(1)} division?
+              from the {memberToDelete?.division ? 
+                memberToDelete.division.charAt(0).toUpperCase() + memberToDelete.division.slice(1) : 
+                ''
+              } division?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
