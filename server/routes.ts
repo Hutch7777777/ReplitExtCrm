@@ -29,9 +29,13 @@ const accountUpdateSchema = z.object({
   role: z.string().min(1).max(100), // Consider restricting to enum in production
 }).partial();
 import { sendEmail, getEmails, getCalendarEvents, createCalendarEvent } from "./outlookClient";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+  
+  // Setup authentication
+  await setupAuth(app);
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -771,6 +775,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error('Settings update error:', error);
       res.status(500).json({ message: 'Failed to update user settings' });
+    }
+  });
+
+  // Authentication routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 

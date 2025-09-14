@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import LeadManagement from "@/pages/lead-management";
@@ -16,32 +17,56 @@ import Reporting from "@/pages/reporting";
 import Vendors from "@/pages/vendors";
 import Calendar from "@/pages/calendar";
 import Settings from "@/pages/settings";
+import Landing from "@/pages/Landing";
+
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show landing page for unauthenticated users
+  if (!isAuthenticated) {
+    return <Landing />;
+  }
+
+  // Show CRM interface for authenticated users
+  return (
+    <TooltipProvider>
+      <SidebarProvider defaultOpen={true}>
+        <AppSidebar />
+        <SidebarInset>
+          <div className="flex-1">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/leads" component={LeadManagement} />
+              <Route path="/estimates" component={Estimates} />
+              <Route path="/communications" component={Communications} />
+              <Route path="/jobs" component={Jobs} />
+              <Route path="/customers" component={Customers} />
+              <Route path="/reporting" component={Reporting} />
+              <Route path="/vendors" component={Vendors} />
+              <Route path="/calendar" component={Calendar} />
+              <Route path="/settings" component={Settings} />
+              <Route component={NotFound} />
+            </Switch>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SidebarProvider defaultOpen={true}>
-          <AppSidebar />
-          <SidebarInset>
-            <div className="flex-1">
-              <Switch>
-                <Route path="/" component={Dashboard} />
-                <Route path="/leads" component={LeadManagement} />
-                <Route path="/estimates" component={Estimates} />
-                <Route path="/communications" component={Communications} />
-                <Route path="/jobs" component={Jobs} />
-                <Route path="/customers" component={Customers} />
-                <Route path="/reporting" component={Reporting} />
-                <Route path="/vendors" component={Vendors} />
-                <Route path="/calendar" component={Calendar} />
-                <Route path="/settings" component={Settings} />
-                <Route component={NotFound} />
-              </Switch>
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-      </TooltipProvider>
+      <AppContent />
       <Toaster />
     </QueryClientProvider>
   );

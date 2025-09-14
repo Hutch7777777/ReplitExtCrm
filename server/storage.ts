@@ -1,5 +1,5 @@
 import { 
-  type User, type InsertUser,
+  type User, type InsertUser, type UpsertUser,
   type Customer, type InsertCustomer,
   type Lead, type InsertLead,
   type Estimate, type InsertEstimate,
@@ -19,6 +19,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>; // Required for Replit Auth
   
   // User Settings
   getUserSettings(userId: string): Promise<UserSettings | undefined>;
@@ -134,16 +135,18 @@ export class MemStorage implements IStorage {
     };
 
     // Initialize with test user
-    const testUser = {
+    const testUser: User = {
       id: "user_1",
       username: "john.smith",
       password: "password123",
       email: "john.smith@company.com", 
       firstName: "John",
       lastName: "Smith",
+      profileImageUrl: null,
       role: "Sales Manager",
       isActive: true,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.users.set("user_1", testUser);
   }
@@ -167,9 +170,33 @@ export class MemStorage implements IStorage {
       role: insertUser.role || "user",
       isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existingUser = this.users.get(userData.id);
+    if (existingUser) {
+      // Update existing user
+      const updatedUser: User = {
+        ...existingUser,
+        ...userData,
+        updatedAt: new Date(),
+      };
+      this.users.set(userData.id, updatedUser);
+      return updatedUser;
+    } else {
+      // Create new user
+      const newUser: User = {
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.users.set(userData.id, newUser);
+      return newUser;
+    }
   }
 
   async updateUser(id: string, updateUser: Partial<InsertUser>): Promise<User> {
