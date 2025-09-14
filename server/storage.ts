@@ -169,9 +169,14 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
-      ...insertUser, 
       id,
-      role: insertUser.role || "user",
+      username: insertUser.username ?? null,
+      password: insertUser.password ?? null,
+      email: insertUser.email ?? null,
+      firstName: insertUser.firstName ?? null,
+      lastName: insertUser.lastName ?? null,
+      profileImageUrl: insertUser.profileImageUrl ?? null,
+      role: insertUser.role ?? "user",
       isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -181,30 +186,40 @@ export class MemStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const existingUser = this.users.get(userData.id);
+    const existingUser = this.users.get(userData.id!);
     if (existingUser) {
       // Update existing user
       const updatedUser: User = {
         ...existingUser,
-        ...userData,
+        id: userData.id!,
+        username: userData.username ?? existingUser.username,
+        password: userData.password ?? existingUser.password,
+        email: userData.email ?? existingUser.email,
         firstName: userData.firstName ?? existingUser.firstName,
         lastName: userData.lastName ?? existingUser.lastName,
-        email: userData.email ?? existingUser.email,
+        profileImageUrl: userData.profileImageUrl ?? existingUser.profileImageUrl,
+        role: userData.role ?? existingUser.role,
+        isActive: userData.isActive ?? existingUser.isActive,
         updatedAt: new Date(),
       };
-      this.users.set(userData.id, updatedUser);
+      this.users.set(userData.id!, updatedUser);
       return updatedUser;
     } else {
       // Create new user
       const newUser: User = {
-        ...userData,
+        id: userData.id!,
+        username: userData.username ?? null,
+        password: userData.password ?? null,
+        email: userData.email ?? null,
         firstName: userData.firstName ?? null,
         lastName: userData.lastName ?? null,
-        email: userData.email ?? null,
+        profileImageUrl: userData.profileImageUrl ?? null,
+        role: userData.role ?? "user",
+        isActive: userData.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      this.users.set(userData.id, newUser);
+      this.users.set(userData.id!, newUser);
       return newUser;
     }
   }
@@ -1045,11 +1060,11 @@ export class DatabaseStorage implements IStorage {
     return memStorage.deleteFileAttachment(id);
   }
 
-  async getWhiteLabelSettings(): Promise<WhiteLabelSettings | undefined> {
+  async getWhiteLabelSettings(): Promise<WhiteLabelSettings> {
     return memStorage.getWhiteLabelSettings();
   }
 
-  async updateWhiteLabelSettings(settings: Partial<InsertWhiteLabelSettings>): Promise<WhiteLabelSettings> {
+  async updateWhiteLabelSettings(settings: InsertWhiteLabelSettings): Promise<WhiteLabelSettings> {
     return memStorage.updateWhiteLabelSettings(settings);
   }
 
