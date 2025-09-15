@@ -180,12 +180,34 @@ export class MemStorage implements IStorage {
     // Hash password if provided
     let hashedPassword = null;
     if (insertUser.password) {
-      hashedPassword = await hash(insertUser.password, {
-        type: 2, // argon2id
-        memoryCost: 65536, // 64 MB
-        timeCost: 3,
-        parallelism: 4,
-      });
+      console.log('[DEBUG] Starting password hash for:', insertUser.username);
+      console.log('[DEBUG] Original password length:', insertUser.password.length);
+      
+      try {
+        hashedPassword = await hash(insertUser.password, {
+          type: 2, // argon2id
+          memoryCost: 65536, // 64 MB
+          timeCost: 3,
+          parallelism: 4,
+        });
+        
+        console.log('[DEBUG] Password hashed successfully:', {
+          originalLength: insertUser.password.length,
+          hashLength: hashedPassword.length,
+          hashPrefix: hashedPassword.substring(0, 20),
+          startsWithDollar: hashedPassword.startsWith('$'),
+          isValidHash: hashedPassword.startsWith('$argon2')
+        });
+        
+        // Additional safety check
+        if (!hashedPassword.startsWith('$')) {
+          throw new Error('Hash does not start with $ - not in PHC format');
+        }
+        
+      } catch (error) {
+        console.error('[ERROR] Password hashing failed:', error);
+        throw new Error('Password hashing failed');
+      }
     }
     
     const user: User = { 
@@ -877,9 +899,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    console.log('[DEBUG DB] Starting password hash for:', insertUser.username);
+    
+    // Hash password if provided
+    let hashedPassword = null;
+    if (insertUser.password) {
+      console.log('[DEBUG DB] Original password length:', insertUser.password.length);
+      
+      try {
+        hashedPassword = await hash(insertUser.password, {
+          type: 2, // argon2id
+          memoryCost: 65536, // 64 MB
+          timeCost: 3,
+          parallelism: 4,
+        });
+        
+        console.log('[DEBUG DB] Password hashed successfully:', {
+          originalLength: insertUser.password.length,
+          hashLength: hashedPassword.length,
+          hashPrefix: hashedPassword.substring(0, 20),
+          startsWithDollar: hashedPassword.startsWith('$'),
+          isValidHash: hashedPassword.startsWith('$argon2')
+        });
+        
+        // Additional safety check
+        if (!hashedPassword.startsWith('$')) {
+          throw new Error('Hash does not start with $ - not in PHC format');
+        }
+        
+      } catch (error) {
+        console.error('[ERROR DB] Password hashing failed:', error);
+        throw new Error('Password hashing failed');
+      }
+    }
+    
+    const userData = {
+      ...insertUser,
+      password: hashedPassword
+    };
+    
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values(userData)
       .returning();
     return user;
   }

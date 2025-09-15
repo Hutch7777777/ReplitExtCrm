@@ -28,7 +28,16 @@ export function setupLocalAuth() {
         }
 
         // Verify password
+        console.log('[DEBUG] Password verification attempt:', {
+          storedHashLength: user.password.length,
+          storedHashPrefix: user.password.substring(0, 20),
+          storedHashStartsWithDollar: user.password.startsWith('$'),
+          inputPasswordLength: password.length
+        });
+        
         const isValid = await verify(user.password, password);
+        console.log('[DEBUG] Password verification result:', isValid);
+        
         if (!isValid) {
           return done(null, false, { message: 'Invalid username or password' });
         }

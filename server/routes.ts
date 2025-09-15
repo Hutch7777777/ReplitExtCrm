@@ -784,6 +784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Local Authentication routes
   app.post('/api/auth/register', async (req, res) => {
+    console.log('[auth] Registration route hit for:', req.body.username);
     try {
       const userData = registerUserSchema.parse(req.body);
       
@@ -800,6 +801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create user (password will be hashed automatically)
+      console.log('[auth] register createUser invoked for:', userData.username);
       const user = await storage.createUser(userData);
       
       // Auto-login after registration
