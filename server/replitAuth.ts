@@ -101,8 +101,53 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  // Unified session serialization for both OAuth and local auth
+  passport.serializeUser((user: any, done) => {
+    // Detect auth type by checking for OAuth-specific properties
+    if (user.access_token || user.refresh_token || user.claims) {
+      // OAuth user - store entire user object with type
+      done(null, { type: 'oauth', user });
+    } else {
+      // Local auth user - store only user ID with type
+      done(null, { type: 'local', userId: user.id });
+    }
+  });
+
+  // Unified session deserialization for both OAuth and local auth
+  passport.deserializeUser(async (sessionData: any, done) => {
+    try {
+      if (sessionData.type === 'oauth') {
+        // New OAuth format - return stored user object directly
+        return done(null, sessionData.user);
+      } else if (sessionData.type === 'local') {
+        // New local format - fetch from database
+        const user = await storage.getUser(sessionData.userId);
+        if (user) {
+          // Return user without password for security
+          const safeUser = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            role: user.role,
+            isActive: user.isActive,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+          };
+          return done(null, safeUser);
+        }
+      } else if (sessionData && (sessionData.access_token || sessionData.refresh_token || sessionData.claims)) {
+        // Legacy OAuth format (backward compatibility) - return user object directly
+        return done(null, sessionData);
+      }
+      return done(null, false);
+    } catch (error) {
+      console.error('User deserialization error:', error);
+      return done(error);
+    }
+  });
 
   app.get("/api/login", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {

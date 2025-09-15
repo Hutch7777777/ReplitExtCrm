@@ -55,37 +55,6 @@ export function setupLocalAuth() {
     }
   ));
 
-  // Serialize user for session
-  passport.serializeUser((user: any, done) => {
-    done(null, { type: 'local', userId: user.id });
-  });
-
-  // Deserialize user from session
-  passport.deserializeUser(async (sessionData: any, done) => {
-    try {
-      if (sessionData.type === 'local') {
-        const user = await storage.getUser(sessionData.userId);
-        if (user) {
-          // Return user without password for security
-          const safeUser = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            profileImageUrl: user.profileImageUrl,
-            role: user.role,
-            isActive: user.isActive,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
-          };
-          return done(null, safeUser);
-        }
-      }
-      return done(null, false);
-    } catch (error) {
-      console.error('User deserialization error:', error);
-      return done(error);
-    }
-  });
+  // Note: Session serialization/deserialization is handled in replitAuth.ts
+  // to avoid conflicts with OAuth authentication
 }
