@@ -13,6 +13,7 @@ import {
   users, customers, leads, estimates, jobs, communications, vendors,
   fileAttachments, whiteLabelSettings, userSettings, teamMembers
 } from "@shared/schema";
+import { hash } from "argon2";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -21,6 +22,7 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>; // Required for Replit Auth
@@ -138,11 +140,11 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
 
-    // Initialize with test user
+    // Initialize with test user - password: "password123" (hashed)
     const testUser: User = {
       id: "user_1",
       username: "john.smith",
-      password: "password123",
+      password: "$argon2id$v=19$m=65536,t=3,p=4$zGhkR5C3VfPGhkR5C3VfPQ$K5zJrW3BjvYtJ7+LL5zJrW3BjvYtJ7+L", // password123 hashed
       email: "john.smith@company.com", 
       firstName: "John",
       lastName: "Smith",
@@ -166,12 +168,30 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
+    
+    // Hash password if provided
+    let hashedPassword = null;
+    if (insertUser.password) {
+      hashedPassword = await hash(insertUser.password, {
+        type: 2, // argon2id
+        memoryCost: 65536, // 64 MB
+        timeCost: 3,
+        parallelism: 4,
+      });
+    }
+    
     const user: User = { 
       id,
       username: insertUser.username ?? null,
-      password: insertUser.password ?? null,
+      password: hashedPassword,
       email: insertUser.email ?? null,
       firstName: insertUser.firstName ?? null,
       lastName: insertUser.lastName ?? null,
@@ -1058,6 +1078,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFileAttachment(id: string): Promise<void> {
     return memStorage.deleteFileAttachment(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return memStorage.getUserByEmail(email);
+  }
+
+  async updateFileAttachment(id: string, attachment: Partial<InsertFileAttachment>): Promise<FileAttachment> {
+    return memStorage.updateFileAttachment(id, attachment);
+  }
+
+  async deleteFileAttachmentsByLead(leadId: string): Promise<void> {
+    return memStorage.deleteFileAttachmentsByLead(leadId);
+  }
+
+  async deleteFileAttachmentsByEstimate(estimateId: string): Promise<void> {
+    return memStorage.deleteFileAttachmentsByEstimate(estimateId);
+  }
+
+  async deleteFileAttachmentsByJob(jobId: string): Promise<void> {
+    return memStorage.deleteFileAttachmentsByJob(jobId);
+  }
+
+  async getTeamMemberByUserId(userId: string): Promise<TeamMember | undefined> {
+    return memStorage.getTeamMemberByUserId(userId);
   }
 
   async getWhiteLabelSettings(): Promise<WhiteLabelSettings> {

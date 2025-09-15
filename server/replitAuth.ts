@@ -133,10 +133,17 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
+  // Handle local authentication (no expires_at property)
+  if (!user.expires_at) {
+    // This is a local auth user, just check if authenticated
+    return next();
+  }
+
+  // Handle OAuth authentication (has expires_at property)
   const now = Math.floor(Date.now() / 1000);
   if (now <= user.expires_at) {
     return next();

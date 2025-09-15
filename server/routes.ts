@@ -30,12 +30,16 @@ const accountUpdateSchema = z.object({
 }).partial();
 import { sendEmail, getEmails, getCalendarEvents, createCalendarEvent } from "./outlookClient";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupLocalAuth } from "./localAuth";
+import { registerUserSchema, loginUserSchema, type RegisterUser } from "@shared/schema";
+import passport from "passport";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
   // Setup authentication
   await setupAuth(app);
+  setupLocalAuth();
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -778,12 +782,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Authentication routes
+  // Local Authentication routes
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const userData = registerUserSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+      
+      // Check if email already exists
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+      
+      // Create user (password will be hashed automatically)
+      const user = await storage.createUser(userData);
+      
+      // Auto-login after registration
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Auto-login error:', err);
+          return res.status(500).json({ message: 'Registration successful but auto-login failed' });
+        }
+        
+        // Return user without password
+        const { password, ...safeUser } = user;
+        res.status(201).json(safeUser);
+      });
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid user data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Registration failed' });
+    }
+  });
+  
+  app.post('/api/auth/login', passport.authenticate('local'), (req: any, res) => {
+    // If we reach here, authentication was successful
+    const { password, ...safeUser } = req.user;
+    res.json(safeUser);
+  });
+  
+  // Get current user (works for both OAuth and local auth)
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId;
+      if (req.user.claims) {
+        // OAuth user (Replit auth)
+        userId = req.user.claims.sub;
+      } else {
+        // Local auth user
+        userId = req.user.id;
+      }
+      
       const user = await storage.getUser(userId);
-      res.json(user);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Return user without password
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
