@@ -1142,7 +1142,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return memStorage.getUserByEmail(email);
+    if (!email) return undefined;
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async updateFileAttachment(id: string, attachment: Partial<InsertFileAttachment>): Promise<FileAttachment> {

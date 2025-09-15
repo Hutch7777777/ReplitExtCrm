@@ -820,6 +820,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error.name === 'ZodError') {
         return res.status(400).json({ message: 'Invalid user data', errors: error.errors });
       }
+      
+      // Handle database constraint violations
+      if (error.code === '23505') { // PostgreSQL unique constraint violation
+        if (error.constraint_name === 'users_email_unique') {
+          return res.status(400).json({ message: 'Email already exists' });
+        }
+        if (error.constraint_name === 'users_username_unique') {
+          return res.status(400).json({ message: 'Username already exists' });
+        }
+        return res.status(400).json({ message: 'User already exists' });
+      }
+      
       res.status(500).json({ message: 'Registration failed' });
     }
   });
